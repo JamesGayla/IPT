@@ -1,11 +1,14 @@
-import Header from "./components/Header";
+import './App.css'
+import Header from './components/Header'
+import Dashboard from './screens/Dashboard'
 
-function App() {
+export default function App() {
   return (
-    <div>
+    <div className="app-root">
       <Header />
+      <main className="main-content">
+        <Dashboard />
+      </main>
     </div>
-  );
+  )
 }
-
-export default App;

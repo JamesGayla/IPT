@@ -1,0 +1,61 @@
+.dashboard {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard h2 {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+}
+
+.vehicle-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vehicle-item {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 15px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  border-left: 4px solid #2c3e50;
+}
+
+.vehicle-id {
+  font-weight: 600;
+  min-width: 80px;
+  color: #2c3e50;
+}
+
+.driver-name {
+  flex: 1;
+  color: #555;
+}
+
+.status {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.status-active {
+  background-color: #27ae60;
+}
+
+.status-idle {
+  background-color: #f39c12;
+}
+
+.status-maintenance {
+  background-color: #e74c3c;
+}

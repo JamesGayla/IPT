@@ -1,5 +1,11 @@
+import './Header.css'
+
 function Header() {
-  return <h1>My Frontend Project</h1>;
+  return (
+    <header>
+      <h1>FleetTrack</h1>
+    </header>
+  )
 }
 
-export default Header;
+export default Header
