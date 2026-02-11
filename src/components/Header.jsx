@@ -3,7 +3,7 @@ import './Header.css'
 function Header() {
   return (
     <header>
-      <h1>FleetTrack</h1>
+      <h1>Parking Lot Manager</h1>
     </header>
   )
 }

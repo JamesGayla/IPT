@@ -1,67 +1,76 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './Dashboard.css'
-import VehicleCard from '../components/VehicleCard'
+import ParkingSpot from '../components/ParkingSpot'
 
 function Dashboard() {
-  const vehicles = [
-    { id: 'V-100', driver: 'Alice', status: 'active' },
-    { id: 'V-101', driver: 'Bob', status: 'idle' },
-    { id: 'V-102', driver: 'Carlos', status: 'maintenance' },
-    { id: 'V-103', driver: 'Diana', status: 'active' },
-  ]
+  const [totalSpots, setTotalSpots] = useState(12)
+  const [occupiedSpots, setOccupiedSpots] = useState([])
+  const [occupancyPercentage, setOccupancyPercentage] = useState(0)
+  const [loading, setLoading] = useState(true)
 
-  const [filter, setFilter] = useState('all')
+  useEffect(() => {
+    fetchParkingStatus()
+  }, [])
 
-  const filteredVehicles = filter === 'all' 
-    ? vehicles 
-    : vehicles.filter(v => v.status === filter)
+  const fetchParkingStatus = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/parking-lot')
+      const data = await response.json()
+      setTotalSpots(data.totalSpots)
+      setOccupiedSpots(data.occupiedSpots)
+      setOccupancyPercentage(data.occupancyPercentage)
+      setLoading(false)
+    } catch (error) {
+      console.error('Failed to fetch parking status:', error)
+      setLoading(false)
+    }
+  }
 
-  const statusCounts = {
-    all: vehicles.length,
-    active: vehicles.filter(v => v.status === 'active').length,
-    idle: vehicles.filter(v => v.status === 'idle').length,
-    maintenance: vehicles.filter(v => v.status === 'maintenance').length,
+  const toggleSpot = async (spotNumber) => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/parking-lot/toggle/${spotNumber}`,
+        { method: 'POST' }
+      )
+      const data = await response.json()
+      setOccupiedSpots(data.occupiedSpots)
+      setOccupancyPercentage(Math.round((data.occupiedSpots.length / totalSpots) * 100))
+    } catch (error) {
+      console.error('Failed to toggle spot:', error)
+    }
+  }
+
+  if (loading) {
+    return <section className="dashboard"><p>Loading parking lot data...</p></section>
   }
 
   return (
     <section className="dashboard">
-      <h2>Fleet Status Dashboard</h2>
+      <h2>Parking Lot Status</h2>
       
-      <div className="filters">
-        <button 
-          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          All ({statusCounts.all})
-        </button>
-        <button 
-          className={`filter-btn ${filter === 'active' ? 'active' : ''}`}
-          onClick={() => setFilter('active')}
-        >
-          Active ({statusCounts.active})
-        </button>
-        <button 
-          className={`filter-btn ${filter === 'idle' ? 'active' : ''}`}
-          onClick={() => setFilter('idle')}
-        >
-          Idle ({statusCounts.idle})
-        </button>
-        <button 
-          className={`filter-btn ${filter === 'maintenance' ? 'active' : ''}`}
-          onClick={() => setFilter('maintenance')}
-        >
-          Maintenance ({statusCounts.maintenance})
-        </button>
+      <div className="occupancy-info">
+        <div className="occupancy-card">
+          <h3>Total Occupancy</h3>
+          <div className="occupancy-display">
+            <p className="occupancy-number">{occupiedSpots.length}/{totalSpots}</p>
+            <p className="occupancy-percentage">{occupancyPercentage}%</p>
+          </div>
+        </div>
+        <div className="occupancy-card">
+          <h3>Available Spots</h3>
+          <p className="available-number">{totalSpots - occupiedSpots.length}</p>
+        </div>
       </div>
 
-      <div className="vehicles-grid">
-        {filteredVehicles.length > 0 ? (
-          filteredVehicles.map((v) => (
-            <VehicleCard key={v.id} vehicle={v} />
-          ))
-        ) : (
-          <p className="no-results">No vehicles in this category</p>
-        )}
+      <div className="parking-grid">
+        {Array.from({ length: totalSpots }, (_, i) => (
+          <ParkingSpot 
+            key={i} 
+            spotNumber={i}
+            isOccupied={occupiedSpots.includes(i)}
+            onToggle={toggleSpot}
+          />
+        ))}
       </div>
     </section>
   )
