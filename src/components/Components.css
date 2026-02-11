@@ -1,0 +1,76 @@
+/* Reusable Components Styles */
+
+/* StatusBadge Component */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  text-transform: capitalize;
+  display: inline-block;
+}
+
+.status-badge.status-active {
+  background-color: #27ae60;
+}
+
+.status-badge.status-idle {
+  background-color: #f39c12;
+}
+
+.status-badge.status-maintenance {
+  background-color: #e74c3c;
+}
+
+/* VehicleCard Component */
+.vehicle-card {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.vehicle-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.driver-info {
+  margin: 0;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.driver-info .label {
+  color: #888;
+  font-weight: 600;
+}
+
+.driver-info .value {
+  color: #333;
+  font-weight: 500;
+}
