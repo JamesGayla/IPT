@@ -1,0 +1,104 @@
+.profile-container {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-card {
+  background: white;
+  padding: 30px 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profile-avatar {
+  font-size: 64px;
+  margin-bottom: 15px;
+}
+
+.profile-card h2 {
+  margin: 10px 0;
+  color: #2c3e50;
+}
+
+.profile-card p {
+  margin: 5px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.profile-role {
+  margin-top: 15px;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.role-badge.admin {
+  background: #667eea;
+  color: white;
+}
+
+.role-badge.user {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.profile-info {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.info-item {
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item label {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 5px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.info-item p {
+  margin: 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.capitalize {
+  text-transform: capitalize;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 12px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.logout-btn:active {
+  opacity: 0.9;
+}
