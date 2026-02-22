@@ -71,7 +71,6 @@
   z-index: 1;
 }
 
-/* Vehicle Card Styles */
 .vehicle-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
