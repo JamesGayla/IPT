@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import './AdminDashboard.css'
 
 function AdminDashboard() {
@@ -14,13 +14,7 @@ function AdminDashboard() {
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
 
-  useEffect(() => {
-    if (isAuthenticated && loading) {
-      fetchAll()
-    }
-  }, [isAuthenticated])
-
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     const mockStats = {
       totalSpots: 12,
       occupiedSpots: 6,
@@ -54,9 +48,15 @@ function AdminDashboard() {
     setCCTVCameras(mockCCTVData)
     setAlerts(mockAlerts)
     setLoading(false)
-  }
+  }, [])
 
-  const handleLogin = async (e) => {
+  useEffect(() => {
+    if (isAuthenticated && loading) {
+      fetchAll()
+    }
+  }, [isAuthenticated, loading, fetchAll])
+
+  const handleLogin = useCallback(async (e) => {
     e.preventDefault()
     setLoginError('')
     
@@ -71,29 +71,30 @@ function AdminDashboard() {
     } else {
       setLoginError('Invalid username or password')
     }
-  }
+  }, [username, password])
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setIsAuthenticated(false)
     setActiveTab('overview')
-  }
+  }, [])
 
-  const getFloorOccupancy = (floor, spotIndex) => {
-    const occupancyMap = {
-      1: [0, 2, 4, 7, 9],
-      2: [1, 3, 5, 8, 10],
-      3: [0, 3, 6, 9, 11],
-      4: [1, 4, 7]
-    }
+  const occupancyMap = useMemo(() => ({
+    1: [0, 2, 4, 7, 9],
+    2: [1, 3, 5, 8, 10],
+    3: [0, 3, 6, 9, 11],
+    4: [1, 4, 7]
+  }), [])
+
+  const getFloorOccupancy = useCallback((floor, spotIndex) => {
     return occupancyMap[floor]?.includes(spotIndex) || false
-  }
+  }, [occupancyMap])
 
   if (!isAuthenticated) {
     return (
       <div className="login-container">
         <div className="login-box">
           <div className="login-header">
-            <h1>Parking Space Monitoring</h1>
+            <h1>ParkFlow</h1>
             <h2>Admin Login</h2>
           </div>
           

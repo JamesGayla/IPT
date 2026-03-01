@@ -1,9 +1,9 @@
 import './Header.css'
 import parkingLogo from '../assets/parking_PNG81.png'
 import { Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, memo } from 'react'
 
-function Header({ view }) {
+const Header = memo(function Header({ view }) {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('darkMode') === 'true'
   })
@@ -12,6 +12,10 @@ function Header({ view }) {
     localStorage.setItem('darkMode', isDarkMode)
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light')
   }, [isDarkMode])
+
+  const toggleTheme = useCallback(() => {
+    setIsDarkMode(prev => !prev)
+  }, [])
 
   return (
     <header className="app-header">
@@ -27,7 +31,7 @@ function Header({ view }) {
           <nav className="header-nav">
             <button 
               className="theme-toggle"
-              onClick={() => setIsDarkMode(!isDarkMode)}
+              onClick={toggleTheme}
               aria-label="Toggle dark mode"
               title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -39,6 +43,6 @@ function Header({ view }) {
       </div>  
     </header>
   )
-}
+})
 
 export default Header

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import '../styles/Login.css'
 
 function Login({ onLogin }) {
@@ -7,7 +7,7 @@ function Login({ onLogin }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
@@ -30,7 +30,7 @@ function Login({ onLogin }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [onLogin])
 
   return (
     <div className="login-container">

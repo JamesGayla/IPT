@@ -1,9 +1,18 @@
 import './App.css'
+import { Suspense, lazy } from 'react'
 import Header from './components/Header'
-import Dashboard from './screens/Dashboard'
-import AdminDashboard from './screens/AdminDashboard'
-import Profile from './screens/Profile'
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
+
+const Dashboard = lazy(() => import('./screens/Dashboard'))
+const AdminDashboard = lazy(() => import('./screens/AdminDashboard'))
+const Profile = lazy(() => import('./screens/Profile'))
+
+const LoadingSpinner = () => (
+  <div className="loading-container">
+    <div className="spinner"></div>
+    <p>Loading...</p>
+  </div>
+)
 
 export default function App() {
   const location = useLocation()
@@ -28,11 +37,13 @@ export default function App() {
           </nav>
         </aside>
         <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/admin/*" element={<AdminDashboard />} />
-            <Route path="/profile" element={<Profile />} />
-          </Routes>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/admin/*" element={<AdminDashboard />} />
+              <Route path="/profile" element={<Profile />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
     </div>

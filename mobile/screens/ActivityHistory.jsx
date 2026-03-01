@@ -1,15 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import '../styles/ActivityHistory.css'
 
 function ActivityHistory({ user }) {
   const [activities, setActivities] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchActivity()
-  }, [])
-
-  const fetchActivity = async () => {
+  const fetchActivity = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:3001/api/activity-history')
       const data = await response.json()
@@ -19,7 +15,11 @@ function ActivityHistory({ user }) {
       console.error('Failed to fetch activity:', error)
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchActivity()
+  }, [fetchActivity])
 
   if (loading) {
     return <div className="history-container"><p>Loading history...</p></div>

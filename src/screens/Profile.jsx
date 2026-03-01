@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import './Dashboard.css'
 import { useNavigate } from 'react-router-dom'
 
@@ -8,10 +8,14 @@ function Profile() {
   const [saved, setSaved] = useState(false)
   const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = useCallback((e) => {
     e.preventDefault()
     setSaved(true)
-  }
+  }, [])
+
+  const handleNavigateBack = useCallback(() => {
+    navigate('/')
+  }, [navigate])
 
   return (
     <section className="dashboard">
@@ -39,7 +43,7 @@ function Profile() {
       )}
 
       <div style={{ marginTop: '20px' }}>
-        <button onClick={() => navigate('/')} className="login-btn">Back to Dashboard</button>
+        <button onClick={handleNavigateBack} className="login-btn">Back to Dashboard</button>
       </div>
     </section>
   )

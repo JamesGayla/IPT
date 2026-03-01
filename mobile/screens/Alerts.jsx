@@ -1,15 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import '../styles/Alerts.css'
 
 function Alerts({ user }) {
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchAlerts()
-  }, [])
-
-  const fetchAlerts = async () => {
+  const fetchAlerts = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:3001/api/alerts')
       const data = await response.json()
@@ -19,9 +15,13 @@ function Alerts({ user }) {
       console.error('Failed to fetch alerts:', error)
       setLoading(false)
     }
-  }
+  }, [])
 
-  const dismissAlert = async (alertId) => {
+  useEffect(() => {
+    fetchAlerts()
+  }, [fetchAlerts])
+
+  const dismissAlert = useCallback(async (alertId) => {
     try {
       await fetch(`http://localhost:3001/api/alerts/${alertId}`, {
         method: 'DELETE'
@@ -30,7 +30,7 @@ function Alerts({ user }) {
     } catch (error) {
       console.error('Failed to dismiss alert:', error)
     }
-  }
+  }, [alerts])
 
   if (loading) {
     return <div className="alerts-container"><p>Loading alerts...</p></div>

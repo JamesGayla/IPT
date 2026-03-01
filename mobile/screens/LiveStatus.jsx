@@ -1,15 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import '../styles/LiveStatus.css'
 
 function LiveStatus() {
   const [parkingData, setParkingData] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchParkingStatus()
-  }, [])
-
-  const fetchParkingStatus = async () => {
+  const fetchParkingStatus = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:3001/api/parking-lot')
       const data = await response.json()
@@ -19,7 +15,19 @@ function LiveStatus() {
       console.error('Failed to fetch:', error)
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchParkingStatus()
+  }, [fetchParkingStatus])
+
+  const spotsList = useMemo(() => {
+    if (!parkingData) return []
+    return Array.from({ length: parkingData.totalSpots }, (_, i) => ({
+      index: i,
+      isOccupied: parkingData.occupiedSpots.includes(i)
+    }))
+  }, [parkingData])
 
   if (loading) {
     return <div className="status-container"><p>Loading...</p></div>
@@ -52,12 +60,12 @@ function LiveStatus() {
       <div className="available-section">
         <h3>Available Spots</h3>
         <div className="spots-list">
-          {Array.from({ length: parkingData.totalSpots }, (_, i) => (
+          {spotsList.map(spot => (
             <div 
-              key={i}
-              className={`spot-badge ${parkingData.occupiedSpots.includes(i) ? 'occupied' : 'available'}`}
+              key={spot.index}
+              className={`spot-badge ${spot.isOccupied ? 'occupied' : 'available'}`}
             >
-              A{i + 1}
+              A{spot.index + 1}
             </div>
           ))}
         </div>

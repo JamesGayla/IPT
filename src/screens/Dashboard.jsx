@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import './Dashboard.css'
 import ParkingSpot from '../components/ParkingSpot'
 
@@ -8,11 +8,7 @@ function Dashboard() {
   const [occupancyPercentage, setOccupancyPercentage] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchParkingStatus()
-  }, [])
-
-  const fetchParkingStatus = async () => {
+  const fetchParkingStatus = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:3001/api/parking-lot')
       const data = await response.json()
@@ -24,9 +20,13 @@ function Dashboard() {
       console.error('Failed to fetch parking status:', error)
       setLoading(false)
     }
-  }
+  }, [])
 
-  const toggleSpot = async (spotNumber) => {
+  useEffect(() => {
+    fetchParkingStatus()
+  }, [fetchParkingStatus])
+
+  const toggleSpot = useCallback(async (spotNumber) => {
     try {
       const response = await fetch(
         `http://localhost:3001/api/parking-lot/toggle/${spotNumber}`,
@@ -38,7 +38,16 @@ function Dashboard() {
     } catch (error) {
       console.error('Failed to toggle spot:', error)
     }
-  }
+  }, [totalSpots])
+
+  const parkingSpots = useMemo(() => {
+    return Array.from({ length: totalSpots }, (_, i) => ({
+      spotNumber: i,
+      isOccupied: occupiedSpots.includes(i)
+    }))
+  }, [totalSpots, occupiedSpots])
+
+  const availableSpots = useMemo(() => totalSpots - occupiedSpots.length, [totalSpots, occupiedSpots.length])
 
   if (loading) {
     return <section className="dashboard"><p>Loading parking lot data...</p></section>
@@ -58,16 +67,16 @@ function Dashboard() {
         </div>
         <div className="occupancy-card">
           <h3>Available Spots</h3>
-          <p className="available-number">{totalSpots - occupiedSpots.length}</p>
+          <p className="available-number">{availableSpots}</p>
         </div>
       </div>
 
       <div className="parking-grid">
-        {Array.from({ length: totalSpots }, (_, i) => (
+        {parkingSpots.map(spot => (
           <ParkingSpot 
-            key={i} 
-            spotNumber={i}
-            isOccupied={occupiedSpots.includes(i)}
+            key={spot.spotNumber} 
+            spotNumber={spot.spotNumber}
+            isOccupied={spot.isOccupied}
             onToggle={toggleSpot}
           />
         ))}

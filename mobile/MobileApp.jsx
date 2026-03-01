@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import './MobileApp.css'
 import Login from './screens/Login'
 import LiveStatus from './screens/LiveStatus'
@@ -11,21 +11,40 @@ function MobileApp() {
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('status')
 
-  const handleLogin = (userData) => {
+  const handleLogin = useCallback((userData) => {
     setUser(userData)
     setIsLoggedIn(true)
     setActiveTab('status')
-  }
+  }, [])
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setIsLoggedIn(false)
     setUser(null)
     setActiveTab('status')
-  }
+  }, [])
+
+  const handleTabChange = useCallback((tab) => {
+    setActiveTab(tab)
+  }, [])
+
+  const activeContent = useMemo(() => {
+    if (activeTab === 'status') return <LiveStatus />
+    if (activeTab === 'alerts') return <Alerts user={user} />
+    if (activeTab === 'history') return <ActivityHistory user={user} />
+    if (activeTab === 'profile') return <Profile user={user} onLogout={handleLogout} />
+    return null
+  }, [activeTab, user, handleLogout])
 
   if (!isLoggedIn) {
     return <Login onLogin={handleLogin} />
   }
+
+  const navItems = useMemo(() => [
+    { id: 'status', icon: '📍', label: 'Status' },
+    { id: 'alerts', icon: '🔔', label: 'Alerts' },
+    { id: 'history', icon: '📋', label: 'History' },
+    { id: 'profile', icon: '👤', label: 'Profile' }
+  ], [])
 
   return (
     <div className="mobile-app">
@@ -35,41 +54,20 @@ function MobileApp() {
       </header>
 
       <main className="mobile-content">
-        {activeTab === 'status' && <LiveStatus />}
-        {activeTab === 'alerts' && <Alerts user={user} />}
-        {activeTab === 'history' && <ActivityHistory user={user} />}
-        {activeTab === 'profile' && <Profile user={user} onLogout={handleLogout} />}
+        {activeContent}
       </main>
 
       <nav className="mobile-nav">
-        <button 
-          className={`nav-item ${activeTab === 'status' ? 'active' : ''}`}
-          onClick={() => setActiveTab('status')}
-        >
-          <span className="icon">📍</span>
-          <span className="label">Status</span>
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'alerts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('alerts')}
-        >
-          <span className="icon">🔔</span>
-          <span className="label">Alerts</span>
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'history' ? 'active' : ''}`}
-          onClick={() => setActiveTab('history')}
-        >
-          <span className="icon">📋</span>
-          <span className="label">History</span>
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-          onClick={() => setActiveTab('profile')}
-        >
-          <span className="icon">👤</span>
-          <span className="label">Profile</span>
-        </button>
+        {navItems.map(item => (
+          <button 
+            key={item.id}
+            className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+            onClick={() => handleTabChange(item.id)}
+          >
+            <span className="icon">{item.icon}</span>
+            <span className="label">{item.label}</span>
+          </button>
+        ))}
       </nav>
     </div>
   )

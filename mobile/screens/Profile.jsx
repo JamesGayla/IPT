@@ -1,7 +1,8 @@
+import { useCallback } from 'react'
 import '../styles/Profile.css'
 
 function Profile({ user, onLogout }) {
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await fetch('http://localhost:3001/api/auth/logout', {
         method: 'POST'
@@ -10,7 +11,7 @@ function Profile({ user, onLogout }) {
     } catch (error) {
       console.error('Failed to logout:', error)
     }
-  }
+  }, [onLogout])
 
   return (
     <div className="profile-container">
