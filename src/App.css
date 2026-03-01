@@ -65,8 +65,6 @@
   flex-shrink: 0;
   backdrop-filter: blur(10px);
 }
-  flex-shrink: 0;
-}
 
 .header-content {
   display: flex;
