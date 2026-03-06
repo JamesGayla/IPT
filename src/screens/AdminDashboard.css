@@ -62,6 +62,25 @@
   color: var(--text-primary);
 }
 
+.login-box .login-header h1,
+.login-box .login-header h2 {
+  color: var(--text-primary);
+}
+
+.login-box .form-group label {
+  color: var(--text-primary);
+}
+
+.login-box .form-group input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.login-box .form-group input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
 @keyframes slideUp {
   from {
     transform: translateY(30px);
@@ -80,15 +99,15 @@
 
 .login-header h1 {
   margin: 0 0 10px 0;
-  font-size: 32px;
+  font-size: 38px;
   color: var(--primary-color);
 }
 
 .login-header h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 26px;
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .login-form {
@@ -113,20 +132,32 @@
 }
 
 .form-group label {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .form-group input {
-  padding: 12px;
+  padding: 14px;
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 15px;
   transition: all 0.2s ease;
   font-family: inherit;
   background: var(--bg-secondary);
   color: var(--text-primary);
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+:root[data-theme='light'] .form-group input::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='dark'] .form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .form-group input:focus {

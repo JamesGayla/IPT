@@ -13,8 +13,8 @@
   --bg-primary: #ffffff;
   --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
-  --text-primary: #1f2937;
-  --text-secondary: #6b7280;
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.75);
   --border-color: #e2e8f0;
   --shadow-sm: rgba(0, 0, 0, 0.05);
   --shadow-md: rgba(0, 0, 0, 0.1);
@@ -29,10 +29,10 @@
   --bg-primary: #ffffff;
   --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
-  --text-primary: #1f2937;
-  --text-secondary: #6b7280;
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.7);
   --warning-color: #f59e0b;
-  --border-color: #e2e8f0;
+  --border-color: rgba(0, 0, 0, 0.12);
   --shadow-sm: rgba(0, 0, 0, 0.05);
   --shadow-md: rgba(0, 0, 0, 0.1);
   --header-bg: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
@@ -46,10 +46,10 @@
   --bg-primary: #1f2937;
   --bg-secondary: #111827;
   --bg-tertiary: #374151;
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
   --warning-color: #f2b751;
-  --border-color: #4b5563;
+  --border-color: rgba(255, 255, 255, 0.12);
   --shadow-sm: rgba(0, 0, 0, 0.3);
   --shadow-md: rgba(0, 0, 0, 0.5);
   --header-bg: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
@@ -192,7 +192,7 @@
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   letter-spacing: 0.5px;
   padding: 0 12px;
 }
@@ -234,7 +234,7 @@
 
 .nav-label {
   flex: 1;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .main-content {
