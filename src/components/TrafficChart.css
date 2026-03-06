@@ -1,0 +1,79 @@
+.traffic-chart-container {
+  background: var(--bg-primary);
+  padding: 30px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px var(--shadow-sm);
+  margin-bottom: 30px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.chart-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.time-period {
+  padding: 6px 14px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid var(--border-color);
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 350px;
+  display: flex;
+  align-items: center;
+}
+
+.chart-wrapper canvas {
+  max-height: 350px;
+}
+
+@media (max-width: 768px) {
+  .traffic-chart-container {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .chart-header {
+    margin-bottom: 15px;
+  }
+
+  .chart-header h3 {
+    font-size: 16px;
+  }
+
+  .chart-wrapper {
+    height: 300px;
+  }
+
+  .chart-wrapper canvas {
+    max-height: 300px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .traffic-chart-container {
+    background: var(--bg-primary);
+  }
+
+  .chart-header h3 {
+    color: var(--text-primary);
+  }
+}
