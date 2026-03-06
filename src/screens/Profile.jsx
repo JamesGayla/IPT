@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
 
 function Profile({ user }) {
@@ -6,54 +7,57 @@ function Profile({ user }) {
   const [vehiclePlate, setVehiclePlate] = useState('')
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-  // Load user profile data on component mount
   useEffect(() => {
     if (user) {
-      // Try to load saved profile data
       const savedProfile = localStorage.getItem(`profile_${user.email}`)
       if (savedProfile) {
         const profileData = JSON.parse(savedProfile)
         setName(profileData.name || user.fullName)
         setVehiclePlate(profileData.vehiclePlate || '')
       } else {
-        // Use data from user object
         setName(user.fullName || '')
       }
     }
   }, [user])
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault()
-    if (!user) return
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault()
+      if (!user) return
 
-    setLoading(true)
+      setLoading(true)
 
-    try {
-      // Save profile data
-      const profileData = {
-        name,
-        vehiclePlate,
-        updatedAt: new Date().toISOString()
+      try {
+        const profileData = {
+          name,
+          vehiclePlate,
+          updatedAt: new Date().toISOString()
+        }
+
+        localStorage.setItem(`profile_${user.email}`, JSON.stringify(profileData))
+
+        const authData = JSON.parse(localStorage.getItem('parkingAuth') || '{}')
+        if (authData.user) {
+          authData.user.fullName = name
+          localStorage.setItem('parkingAuth', JSON.stringify(authData))
+        }
+
+        setSaved(true)
+        setTimeout(() => setSaved(false), 3000)
+      } catch (error) {
+        console.error('Error saving profile:', error)
+      } finally {
+        setLoading(false)
       }
+    },
+    [name, vehiclePlate, user]
+  )
 
-      localStorage.setItem(`profile_${user.email}`, JSON.stringify(profileData))
-
-      // Update user data in auth storage
-      const authData = JSON.parse(localStorage.getItem('parkingAuth') || '{}')
-      if (authData.user) {
-        authData.user.fullName = name
-        localStorage.setItem('parkingAuth', JSON.stringify(authData))
-      }
-
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    } catch (error) {
-      console.error('Error saving profile:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [name, vehiclePlate, user])
+  const handleNavigateBack = useCallback(() => {
+    navigate('/')
+  }, [navigate])
 
   if (!user) {
     return (
@@ -70,8 +74,12 @@ function Profile({ user }) {
       <div className="profile-info">
         <div className="info-card">
           <h3>Account Information</h3>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Member since:</strong> {new Date().toLocaleDateString()}</p>
+          <p>
+            <strong>Email:</strong> {user.email}
+          </p>
+          <p>
+            <strong>Member since:</strong> {new Date().toLocaleDateString()}
+          </p>
         </div>
       </div>
 
@@ -109,6 +117,12 @@ function Profile({ user }) {
           <p>Your profile information has been updated.</p>
         </div>
       )}
+
+      <div style={{ marginTop: '20px' }}>
+        <button onClick={handleNavigateBack} className="login-btn">
+          Back to Dashboard
+        </button>
+      </div>
     </section>
   )
 }

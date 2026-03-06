@@ -189,7 +189,6 @@
   margin: 8px 0;
   color: var(--text-secondary);
 }
-
 @media (max-width: 1024px) {
   .dashboard {
     padding: 24px;

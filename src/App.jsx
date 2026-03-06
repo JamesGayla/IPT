@@ -93,16 +93,16 @@ export default function App() {
         <aside className="sidebar">
           <nav className="nav-menu">
             <h3 className="nav-title">Menu</h3>
-            <NavLink to="/" end className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
+            <NavLink to="/" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               <span className="nav-label">Parking Status</span>
             </NavLink>
-            <NavLink to="/analytics" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
+            <NavLink to="/analytics" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               <span className="nav-label">Analytics</span>
             </NavLink>
-            <NavLink to="/admin" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
+            <NavLink to="/admin" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               <span className="nav-label">Admin Panel</span>
             </NavLink>
-            <NavLink to="/profile" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
+            <NavLink to="/profile" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               <span className="nav-label">Profile</span>
             </NavLink>
           </nav>
@@ -111,26 +111,38 @@ export default function App() {
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               <Route path="/auth" element={<Auth onLogin={handleLogin} />} />
-              <Route path="/" element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/analytics" element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Analytics />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/*" element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute isAuthenticated={isAuthenticated}>
-                  <Profile user={user} />
-                </ProtectedRoute>
-              } />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <Analytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/*"
+                element={
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <Profile user={user} />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </Suspense>
         </main>

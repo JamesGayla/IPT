@@ -36,7 +36,7 @@ const Header = memo(function Header({ onLogout, user }) {
   return (
     <header className="app-header">
       <div className="header-content">
-        <div className="brand" onClick={() => navigate('/')}>
+        <div className="brand" onClick={() => navigate('/') }>
           <img src={parkingLogo} alt="Parking Logo" className="brand-icon" />
           <h1>ParkFlow</h1>
         </div>
@@ -44,6 +44,7 @@ const Header = memo(function Header({ onLogout, user }) {
           <span className="current-view">
             {getViewLabel()}
           </span>
+
           <div className="user-info">
             {user && (
               <span className="user-greeting">

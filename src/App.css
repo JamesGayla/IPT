@@ -14,7 +14,7 @@
   --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
   --text-primary: #1f2937;
-  --text-secondary: #f1f5f9;
+  --text-secondary: #6b7280;
   --border-color: #e2e8f0;
   --shadow-sm: rgba(0, 0, 0, 0.05);
   --shadow-md: rgba(0, 0, 0, 0.1);
@@ -30,7 +30,7 @@
   --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
   --text-primary: #1f2937;
-  --text-secondary: #f1f5f9;
+  --text-secondary: #6b7280;
   --warning-color: #f59e0b;
   --border-color: #e2e8f0;
   --shadow-sm: rgba(0, 0, 0, 0.05);
@@ -192,7 +192,7 @@
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   letter-spacing: 0.5px;
   padding: 0 12px;
 }
@@ -234,7 +234,7 @@
 
 .nav-label {
   flex: 1;
-  color: var(--text-primary)
+  color: var(--text-secondary);
 }
 
 .main-content {

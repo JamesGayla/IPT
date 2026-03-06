@@ -7,6 +7,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+<<<<<<< HEAD
+=======
+node_modules
+dist
+.env
+dist-ssr
+*.local
+>>>>>>> 09b599a93b1b5aa336417bdaddacbe52b5073be2
 
 # Editor directories and files
 .vscode/*
@@ -18,4 +26,7 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+<<<<<<< HEAD
 node_modules
+=======
+>>>>>>> 09b599a93b1b5aa336417bdaddacbe52b5073be2
