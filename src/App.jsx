@@ -1,7 +1,10 @@
 import './App.css'
-import { Suspense, lazy, useState, useEffect } from 'react'
-import Header from './components/Header'
+import { Suspense, lazy } from 'react'
 import { Routes, Route, NavLink, useLocation, Navigate } from 'react-router-dom'
+import Header from './components/Header'
+import LoadingSpinner from './components/LoadingSpinner'
+import ProtectedRoute from './components/ProtectedRoute'
+import useAuth from './hooks/useAuth'
 
 const Dashboard = lazy(() => import('./screens/Dashboard'))
 const AdminDashboard = lazy(() => import('./screens/AdminDashboard'))
@@ -9,57 +12,9 @@ const Profile = lazy(() => import('./screens/Profile'))
 const Analytics = lazy(() => import('./screens/Analytics'))
 const Auth = lazy(() => import('./screens/Auth'))
 
-const LoadingSpinner = () => (
-  <div className="loading-container">
-    <div className="spinner"></div>
-    <p>Loading...</p>
-  </div>
-)
-
-// Protected Route component
-function ProtectedRoute({ children, isAuthenticated }) {
-  return isAuthenticated ? children : <Navigate to="/auth" replace />
-}
-
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState(null)
-  const [authLoading, setAuthLoading] = useState(true)
   const location = useLocation()
-
-  // Check authentication on app load
-  useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const authData = localStorage.getItem('parkingAuth')
-        if (authData) {
-          const { isAuthenticated: authStatus, user: userData } = JSON.parse(authData)
-          if (authStatus && userData) {
-            setIsAuthenticated(true)
-            setUser(userData)
-          }
-        }
-      } catch (error) {
-        console.error('Error checking authentication:', error)
-        localStorage.removeItem('parkingAuth')
-      } finally {
-        setAuthLoading(false)
-      }
-    }
-
-    checkAuth()
-  }, [])
-
-  const handleLogin = (userData) => {
-    setIsAuthenticated(true)
-    setUser(userData)
-  }
-
-  const handleLogout = () => {
-    setIsAuthenticated(false)
-    setUser(null)
-    localStorage.removeItem('parkingAuth')
-  }
+  const { isAuthenticated, user, authLoading, handleLogin, handleLogout } = useAuth()
 
   const view = location.pathname.startsWith('/admin') ? 'admin' : 'user'
 
