@@ -39,12 +39,15 @@ function MobileApp() {
     return <Login onLogin={handleLogin} />
   }
 
-  const navItems = useMemo(() => [
-    { id: 'status', icon: '📍', label: 'Status' },
-    { id: 'alerts', icon: '🔔', label: 'Alerts' },
-    { id: 'history', icon: '📋', label: 'History' },
-    { id: 'profile', icon: '👤', label: 'Profile' }
-  ], [])
+  const navItems = useMemo(
+    () => [
+      { id: 'status', icon: '\u{1F4CD}', label: 'Status' },
+      { id: 'alerts', icon: '\u{1F514}', label: 'Alerts' },
+      { id: 'history', icon: '\u{1F4CB}', label: 'History' },
+      { id: 'profile', icon: '\u{1F464}', label: 'Profile' },
+    ],
+    [],
+  )
 
   return (
     <div className="mobile-app">
@@ -53,13 +56,11 @@ function MobileApp() {
         <p className="user-name">{user?.username}</p>
       </header>
 
-      <main className="mobile-content">
-        {activeContent}
-      </main>
+      <main className="mobile-content">{activeContent}</main>
 
       <nav className="mobile-nav">
-        {navItems.map(item => (
-          <button 
+        {navItems.map((item) => (
+          <button
             key={item.id}
             className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
             onClick={() => handleTabChange(item.id)}

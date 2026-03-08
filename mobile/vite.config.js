@@ -4,22 +4,17 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5174
+    port: 5174,
+    open: true,
   },
   build: {
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      }
-    },
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor': ['react', 'react-dom']
-        }
-      }
+          vendor: ['react', 'react-dom'],
+        },
+      },
     },
     chunkSizeWarningLimit: 300,
     sourcemap: false,
@@ -28,5 +23,5 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
-    exclude: ['node_modules']  }
+  },
 })
