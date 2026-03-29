@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './Analytics.css'
 import {
   Chart as ChartJS,
@@ -30,51 +30,40 @@ ChartJS.register(
 )
 
 function Analytics() {
-  const [analyticsData, setAnalyticsData] = useState({
-    occupancyTrend: [],
-    vehicleTypes: [],
-    peakHours: [],
-    weeklyStats: []
-  })
-
-  useEffect(() => {
-    // Mock analytics data
-    const mockData = {
-      occupancyTrend: [
-        { time: '6:00', occupied: 2, total: 12 },
-        { time: '8:00', occupied: 8, total: 12 },
-        { time: '10:00', occupied: 10, total: 12 },
-        { time: '12:00', occupied: 12, total: 12 },
-        { time: '14:00', occupied: 11, total: 12 },
-        { time: '16:00', occupied: 9, total: 12 },
-        { time: '18:00', occupied: 7, total: 12 },
-        { time: '20:00', occupied: 4, total: 12 }
-      ],
-      vehicleTypes: [
-        { type: 'Sedan', count: 45, percentage: 60 },
-        { type: 'SUV', count: 18, percentage: 24 },
-        { type: 'Truck', count: 8, percentage: 11 },
-        { type: 'Motorcycle', count: 4, percentage: 5 }
-      ],
-      peakHours: [
-        { hour: '6-8 AM', vehicles: 25 },
-        { hour: '8-10 AM', vehicles: 45 },
-        { hour: '10-12 PM', vehicles: 38 },
-        { hour: '12-2 PM', vehicles: 52 },
-        { hour: '2-4 PM', vehicles: 48 },
-        { hour: '4-6 PM', vehicles: 65 },
-        { hour: '6-8 PM', vehicles: 58 },
-        { hour: '8-10 PM', vehicles: 32 }
-      ],
-      weeklyStats: {
-        totalRevenue: 4320,
-        totalVehicles: 365,
-        avgOccupancy: 85,
-        peakHour: '4-6 PM'
-      }
+  const [analyticsData] = useState({
+    occupancyTrend: [
+      { time: '6:00', occupied: 2, total: 12 },
+      { time: '8:00', occupied: 8, total: 12 },
+      { time: '10:00', occupied: 10, total: 12 },
+      { time: '12:00', occupied: 12, total: 12 },
+      { time: '14:00', occupied: 11, total: 12 },
+      { time: '16:00', occupied: 9, total: 12 },
+      { time: '18:00', occupied: 7, total: 12 },
+      { time: '20:00', occupied: 4, total: 12 }
+    ],
+    vehicleTypes: [
+      { type: 'Sedan', count: 45, percentage: 60 },
+      { type: 'SUV', count: 18, percentage: 24 },
+      { type: 'Truck', count: 8, percentage: 11 },
+      { type: 'Motorcycle', count: 4, percentage: 5 }
+    ],
+    peakHours: [
+      { hour: '6-8 AM', vehicles: 25 },
+      { hour: '8-10 AM', vehicles: 45 },
+      { hour: '10-12 PM', vehicles: 38 },
+      { hour: '12-2 PM', vehicles: 52 },
+      { hour: '2-4 PM', vehicles: 48 },
+      { hour: '4-6 PM', vehicles: 65 },
+      { hour: '6-8 PM', vehicles: 58 },
+      { hour: '8-10 PM', vehicles: 32 }
+    ],
+    weeklyStats: {
+      totalRevenue: 4320,
+      totalVehicles: 365,
+      avgOccupancy: 85,
+      peakHour: '4-6 PM'
     }
-    setAnalyticsData(mockData)
-  }, [])
+  })
 
   const occupancyTrendData = {
     labels: analyticsData.occupancyTrend.map(item => item.time),

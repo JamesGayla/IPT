@@ -1,32 +1,15 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import './Dashboard.css'
 import ParkingSpot from '../components/ParkingSpot'
 import VehicleTracker from '../components/VehicleTracker'
 import TrafficChart from '../components/TrafficChart'
 
 function Dashboard() {
-  const [totalSpots, setTotalSpots] = useState(12)
-  const [occupiedSpots, setOccupiedSpots] = useState([])
-  const [occupancyPercentage, setOccupancyPercentage] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [totalSpots] = useState(12)
+  const [occupiedSpots, setOccupiedSpots] = useState([1, 3, 4, 5, 7, 8])
+  const [occupancyPercentage, setOccupancyPercentage] = useState(50)
+  const [loading] = useState(false)
 
-  const fetchParkingStatus = useCallback(async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/parking-lot')
-      const data = await response.json()
-      setTotalSpots(data.totalSpots)
-      setOccupiedSpots(data.occupiedSpots)
-      setOccupancyPercentage(data.occupancyPercentage)
-      setLoading(false) 
-    } catch (error) {
-      console.error('Failed to fetch parking status:', error)
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchParkingStatus()
-  }, [fetchParkingStatus])
 
   const toggleSpot = useCallback(async (spotNumber) => {
     try {

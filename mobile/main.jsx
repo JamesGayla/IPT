@@ -1,19 +1,14 @@
-import { StrictMode, useEffect } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import MobileApp from './MobileApp.jsx'
+// mobile/main.jsx
+import { AppRegistry, Platform } from 'react-native';
+import MobileApp from './MobileApp';
 
-function AppWrapper() {
-  useEffect(() => {
-    const darkMode = localStorage.getItem('darkMode') === 'true'
-    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
-  }, [])
+// Register the app
+AppRegistry.registerComponent('ParkFlow', () => MobileApp);
 
-  return <MobileApp />
+// For web
+if (Platform.OS === 'web') {
+  const rootTag = document.getElementById('root') || document.getElementById('root');
+  AppRegistry.runApplication('ParkFlow', { rootTag });
 }
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <AppWrapper />
-  </StrictMode>,
-)
+export default MobileApp;

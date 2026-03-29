@@ -1,12 +1,37 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import './AdminDashboard.css'
 
+const DEFAULT_ALERT_TIMESTAMP = new Date(Date.now() - 60000)
+
 function AdminDashboard() {
-  const [stats, setStats] = useState(null)
-  const [cctvCameras, setCCTVCameras] = useState([])
-  const [alerts, setAlerts] = useState([])
+  const [stats] = useState({
+    totalSpots: 12,
+    occupiedSpots: 6,
+    availableSpots: 6,
+    occupancyPercentage: 50,
+    totalAlerts: 2,
+    cameraCount: 12
+  })
+  const [cctvCameras] = useState([
+    { spotNumber: 0, status: 'active', occupancyDetected: true, confidence: 98, lastUpdate: new Date() },
+    { spotNumber: 1, status: 'active', occupancyDetected: false, confidence: 97, lastUpdate: new Date() },
+    { spotNumber: 2, status: 'active', occupancyDetected: true, confidence: 95, lastUpdate: new Date() },
+    { spotNumber: 3, status: 'active', occupancyDetected: false, confidence: 99, lastUpdate: new Date() },
+    { spotNumber: 4, status: 'active', occupancyDetected: false, confidence: 96, lastUpdate: new Date() },
+    { spotNumber: 5, status: 'active', occupancyDetected: true, confidence: 94, lastUpdate: new Date() },
+    { spotNumber: 6, status: 'active', occupancyDetected: false, confidence: 98, lastUpdate: new Date() },
+    { spotNumber: 7, status: 'active', occupancyDetected: true, confidence: 92, lastUpdate: new Date() },
+    { spotNumber: 8, status: 'active', occupancyDetected: false, confidence: 95, lastUpdate: new Date() },
+    { spotNumber: 9, status: 'active', occupancyDetected: true, confidence: 97, lastUpdate: new Date() },
+    { spotNumber: 10, status: 'active', occupancyDetected: false, confidence: 96, lastUpdate: new Date() },
+    { spotNumber: 11, status: 'active', occupancyDetected: true, confidence: 99, lastUpdate: new Date() }
+  ])
+  const [alerts] = useState([
+    { id: 1, type: 'HIGH_OCCUPANCY', message: 'Parking lot at 50% capacity', timestamp: new Date(), severity: 'warning' },
+    { id: 2, type: 'SPACE_AVAILABLE', message: 'New parking spaces now available on Floor 2', timestamp: DEFAULT_ALERT_TIMESTAMP, severity: 'info' }
+  ])
   const [activeTab, setActiveTab] = useState('overview')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [selectedCamera, setSelectedCamera] = useState(null)
   const [selectedFloor, setSelectedFloor] = useState(1)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -14,47 +39,9 @@ function AdminDashboard() {
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
 
-  const fetchAll = useCallback(async () => {
-    const mockStats = {
-      totalSpots: 12,
-      occupiedSpots: 6,
-      availableSpots: 6,
-      occupancyPercentage: 50,
-      totalAlerts: 2,
-      cameraCount: 12
-    }
-
-    const mockCCTVData = [
-      { spotNumber: 0, status: 'active', occupancyDetected: true, confidence: 98, lastUpdate: new Date() },
-      { spotNumber: 1, status: 'active', occupancyDetected: false, confidence: 97, lastUpdate: new Date() },
-      { spotNumber: 2, status: 'active', occupancyDetected: true, confidence: 95, lastUpdate: new Date() },
-      { spotNumber: 3, status: 'active', occupancyDetected: false, confidence: 99, lastUpdate: new Date() },
-      { spotNumber: 4, status: 'active', occupancyDetected: false, confidence: 96, lastUpdate: new Date() },
-      { spotNumber: 5, status: 'active', occupancyDetected: true, confidence: 94, lastUpdate: new Date() },
-      { spotNumber: 6, status: 'active', occupancyDetected: false, confidence: 98, lastUpdate: new Date() },
-      { spotNumber: 7, status: 'active', occupancyDetected: true, confidence: 92, lastUpdate: new Date() },
-      { spotNumber: 8, status: 'active', occupancyDetected: false, confidence: 95, lastUpdate: new Date() },
-      { spotNumber: 9, status: 'active', occupancyDetected: true, confidence: 97, lastUpdate: new Date() },
-      { spotNumber: 10, status: 'active', occupancyDetected: false, confidence: 96, lastUpdate: new Date() },
-      { spotNumber: 11, status: 'active', occupancyDetected: true, confidence: 99, lastUpdate: new Date() }
-    ]
-
-    const mockAlerts = [
-      { id: 1, type: 'HIGH_OCCUPANCY', message: 'Parking lot at 50% capacity', timestamp: new Date(), severity: 'warning' },
-      { id: 2, type: 'SPACE_AVAILABLE', message: 'New parking spaces now available on Floor 2', timestamp: new Date(Date.now() - 60000), severity: 'info' }
-    ]
-
-    setStats(mockStats)
-    setCCTVCameras(mockCCTVData)
-    setAlerts(mockAlerts)
-    setLoading(false)
+  const fetchAll = useCallback(() => {
+    // data is static for now, no action required
   }, [])
-
-  useEffect(() => {
-    if (isAuthenticated && loading) {
-      fetchAll()
-    }
-  }, [isAuthenticated, loading, fetchAll])
 
   const handleLogin = useCallback(async (e) => {
     e.preventDefault()
@@ -212,6 +199,17 @@ function AdminDashboard() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="cctv-summary" style={{ marginBottom: '16px' }}>
+            <h4>CCTV Camera Status</h4>
+            <ul>
+              {cctvCameras.map(cam => (
+                <li key={cam.spotNumber}>
+                  Spot {cam.spotNumber + 1}: {cam.status} - {cam.occupancyDetected ? 'Occupied' : 'Available'}
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div className="floor-view">

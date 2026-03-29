@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import '../styles/ActivityHistory.css'
 
-function ActivityHistory({ user }) {
+function ActivityHistory() {
   const [activities, setActivities] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -18,7 +18,18 @@ function ActivityHistory({ user }) {
   }, [])
 
   useEffect(() => {
-    fetchActivity()
+    let isMounted = true
+
+    const load = async () => {
+      if (!isMounted) return
+      await fetchActivity()
+    }
+
+    load()
+
+    return () => {
+      isMounted = false
+    }
   }, [fetchActivity])
 
   if (loading) {
@@ -33,7 +44,7 @@ function ActivityHistory({ user }) {
         <p className="no-history">No activity history</p>
       ) : (
         <div className="timeline">
-          {activities.map((activity, index) => (
+          {activities.map((activity) => (
             <div key={activity.id} className="timeline-item">
               <div className="timeline-marker"></div>
               <div className="timeline-content">

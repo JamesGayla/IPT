@@ -29,7 +29,12 @@ const ADMIN_PASSWORD = 'admin123'
 
 const FALLBACK_API_BASE =
   Platform.OS === 'android' ? 'http://10.0.2.2:3001' : 'http://localhost:3001'
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || FALLBACK_API_BASE
+const API_BASE_URL =
+  typeof globalThis !== 'undefined' && globalThis.process?.env?.EXPO_PUBLIC_API_BASE_URL
+    ? globalThis.process.env.EXPO_PUBLIC_API_BASE_URL
+    : FALLBACK_API_BASE
+
+const STATIC_ALERT_TIMESTAMP = new Date(Date.now() - 60000).toISOString()
 
 function toTitle(value) {
   return value.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase())
@@ -188,7 +193,8 @@ function StatusScreen() {
       const response = await fetch(`${API_BASE_URL}/api/parking-lot`)
       const data = await response.json()
       setParkingData(data)
-    } catch (e) {
+    } catch (error) {
+      console.error('Failed to fetch parking:', error)
       Alert.alert(
         'Unable to reach server',
         `Set EXPO_PUBLIC_API_BASE_URL to your server host. Current: ${API_BASE_URL}`,
@@ -240,19 +246,37 @@ function StatusScreen() {
     return <ActivityIndicator style={styles.loader} size="large" />
   }
 
+  const availableSpots = parkingData?.totalSpots - parkingData?.occupiedSpots.length || 0
+
   return (
     <ScrollView
       style={styles.tabContent}
       contentContainerStyle={styles.sectionGap}
       refreshControl={null}
     >
+      <Text style={styles.dashboardTitle}>Parking Overview</Text>
+      <View style={styles.statsRow}>
+        <View style={[styles.statCard, styles.statCardPrimary]}>
+          <Text style={styles.statLabel}>Total</Text>
+          <Text style={styles.statValue}>{parkingData?.totalSpots ?? 0}</Text>
+        </View>
+        <View style={[styles.statCard, styles.statCardDanger]}>
+          <Text style={styles.statLabel}>Occupied</Text>
+          <Text style={styles.statValue}>{parkingData?.occupiedSpots.length ?? 0}</Text>
+        </View>
+        <View style={[styles.statCard, styles.statCardSuccess]}>
+          <Text style={styles.statLabel}>Available</Text>
+          <Text style={styles.statValue}>{availableSpots}</Text>
+        </View>
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Parking Lot Status of SM Downtown CDO</Text>
         <Text style={styles.bigStat}>
           {parkingData?.occupiedSpots.length}/{parkingData?.totalSpots}
         </Text>
         <Text style={styles.smallMuted}>{parkingData?.occupancyPercentage}% occupied</Text>
-        <Text style={styles.smallMuted}>Available: {parkingData?.availableSpots}</Text>
+        <Text style={styles.smallMuted}>Available: {availableSpots}</Text>
         <Text style={styles.smallMuted}>API: {API_BASE_URL}</Text>
       </View>
 
@@ -309,6 +333,22 @@ function AnalyticsScreen() {
 
   return (
     <ScrollView style={styles.tabContent} contentContainerStyle={styles.sectionGap}>
+      <Text style={styles.dashboardTitle}>Analytics Overview</Text>
+      <View style={styles.statsRow}>
+        <View style={[styles.statCard, styles.statCardPrimary]}>
+          <Text style={styles.statLabel}>Revenue</Text>
+          <Text style={styles.statValue}>${weeklyStats.totalRevenue}</Text>
+        </View>
+        <View style={[styles.statCard, styles.statCardWarning]}>
+          <Text style={styles.statLabel}>Avg Occupancy</Text>
+          <Text style={styles.statValue}>{weeklyStats.avgOccupancy}%</Text>
+        </View>
+        <View style={[styles.statCard, styles.statCardInfo]}>
+          <Text style={styles.statLabel}>Peak Hour</Text>
+          <Text style={styles.statValue}>{weeklyStats.peakHour}</Text>
+        </View>
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.cardTitle}>System Analytics</Text>
         <Text style={styles.smallMuted}>Total Vehicles: {weeklyStats.totalVehicles}</Text>
@@ -372,7 +412,7 @@ function AdminScreen() {
         type: 'SPACE_AVAILABLE',
         message: 'New parking spaces now available on Floor 2',
         severity: 'info',
-        timestamp: new Date(Date.now() - 60000).toISOString(),
+        timestamp: STATIC_ALERT_TIMESTAMP,
       },
     ],
     [],
@@ -429,6 +469,22 @@ function AdminScreen() {
 
   return (
     <ScrollView style={styles.tabContent} contentContainerStyle={styles.sectionGap}>
+      <Text style={styles.dashboardTitle}>Admin Controls</Text>
+      <View style={styles.statsRow}>
+        <View style={[styles.statCard, styles.statCardPrimary]}>
+          <Text style={styles.statLabel}>Total Spots</Text>
+          <Text style={styles.statValue}>{stats.totalSpots}</Text>
+        </View>
+        <View style={[styles.statCard, styles.statCardDanger]}>
+          <Text style={styles.statLabel}>Occupied</Text>
+          <Text style={styles.statValue}>{stats.occupiedSpots}</Text>
+        </View>
+        <View style={[styles.statCard, styles.statCardSuccess]}>
+          <Text style={styles.statLabel}>Available</Text>
+          <Text style={styles.statValue}>{stats.availableSpots}</Text>
+        </View>
+      </View>
+
       <View style={styles.segment}>
         {['overview', 'monitoring', 'alerts'].map((item) => (
           <Pressable
@@ -623,15 +679,16 @@ export default function App() {
     setActiveTab('status')
   }, [])
 
-  const screen = useMemo(() => {
-    if (activeTab === 'status') return <StatusScreen />
-    if (activeTab === 'analytics') return <AnalyticsScreen />
-    if (activeTab === 'admin') return <AdminScreen />
-    if (activeTab === 'profile') {
-      return <ProfileScreen user={user} onUserUpdate={setUser} onLogout={handleLogout} />
-    }
-    return null
-  }, [activeTab, handleLogout, user])
+  const screen =
+    activeTab === 'status' ? (
+      <StatusScreen />
+    ) : activeTab === 'analytics' ? (
+      <AnalyticsScreen />
+    ) : activeTab === 'admin' ? (
+      <AdminScreen />
+    ) : activeTab === 'profile' ? (
+      <ProfileScreen user={user} onUserUpdate={setUser} onLogout={handleLogout} />
+    ) : null
 
   if (authLoading) {
     return <ActivityIndicator style={styles.loader} size="large" />
@@ -801,6 +858,53 @@ const styles = StyleSheet.create({
   },
   smallMuted: {
     color: '#64748b',
+  },
+  dashboardTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 8,
+    color: '#0f172a',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 10,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 10,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 90,
+  },
+  statCardPrimary: {
+    backgroundColor: '#6366f1',
+  },
+  statCardSuccess: {
+    backgroundColor: '#34d399',
+  },
+  statCardDanger: {
+    backgroundColor: '#f87171',
+  },
+  statCardWarning: {
+    backgroundColor: '#fbbf24',
+  },
+  statCardInfo: {
+    backgroundColor: '#38bdf8',
+  },
+  statLabel: {
+    color: '#fff',
+    fontSize: 12,
+    textTransform: 'uppercase',
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  statValue: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '800',
   },
   rowText: {
     color: '#0f172a',

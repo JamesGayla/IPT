@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import '../styles/Alerts.css'
 
-function Alerts({ user }) {
+function Alerts() {
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -18,7 +18,18 @@ function Alerts({ user }) {
   }, [])
 
   useEffect(() => {
-    fetchAlerts()
+    let isMounted = true
+
+    const load = async () => {
+      if (!isMounted) return
+      await fetchAlerts()
+    }
+
+    load()
+
+    return () => {
+      isMounted = false
+    }
   }, [fetchAlerts])
 
   const dismissAlert = useCallback(async (alertId) => {

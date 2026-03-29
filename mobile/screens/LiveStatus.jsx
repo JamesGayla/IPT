@@ -18,7 +18,18 @@ function LiveStatus() {
   }, [])
 
   useEffect(() => {
-    fetchParkingStatus()
+    let isMounted = true
+
+    const load = async () => {
+      if (!isMounted) return
+      await fetchParkingStatus()
+    }
+
+    load()
+
+    return () => {
+      isMounted = false
+    }
   }, [fetchParkingStatus])
 
   const spotsList = useMemo(() => {

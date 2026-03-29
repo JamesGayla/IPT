@@ -1,22 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import './VehicleTracker.css'
 
 function VehicleTracker() {
-  const [vehicleData, setVehicleData] = useState({
-    carsIn: 0,
+  const [vehicleData] = useState({
+    carsIn: 50,
     carsOut: 0,
-    totalToday: 0
+    totalToday: 50
   })
-
-  useEffect(() => {
-    // Mock data - in a real app, this would come from your backend
-    const mockData = {
-      carsIn: 50,
-      carsOut: 0,
-      totalToday: 50
-    }
-    setVehicleData(mockData)
-  }, [])
 
   return (
     <div className="vehicle-tracker">
