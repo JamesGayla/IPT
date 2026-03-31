@@ -25,6 +25,17 @@ const Header = memo(function Header({ onLogout, user }) {
     }
   }, [onLogout])
 
+  const getUserGreeting = useCallback(() => {
+    const path = location.pathname
+    if (path.includes('/admin')) {
+      return 'ADMIN OFFICER (COMMAND)'
+    }
+    if (user && user.fullName) {
+      return `Welcome, ${user.fullName}`
+    }
+    return 'Welcome'
+  }, [location.pathname, user])
+
   const getViewLabel = useCallback(() => {
     const path = location.pathname
     if (path.includes('/profile')) return 'Profile'
@@ -46,11 +57,9 @@ const Header = memo(function Header({ onLogout, user }) {
           </span>
 
           <div className="user-info">
-            {user && (
-              <span className="user-greeting">
-                Welcome, {user.fullName}
-              </span>
-            )}
+            <span className="user-greeting">
+              {getUserGreeting()}
+            </span>
             <nav className="header-nav">
               <button
                 className="theme-toggle"

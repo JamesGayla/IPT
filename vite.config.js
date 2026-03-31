@@ -3,6 +3,12 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      'expo-camera': '/src/stubs/expo-camera.js',
+      'expo-av': '/src/stubs/expo-camera.js'
+    }
+  },
   build: {
     minify: 'terser',
     terserOptions: {

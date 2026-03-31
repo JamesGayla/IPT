@@ -40,12 +40,35 @@ function Dashboard() {
 
   return (
     <section className="dashboard">
-      <h2>Parking Lot Status of SM Downtown CDO</h2>
-      
+      <h2>Parking Lot Status (Minimal Dashboard)</h2>
+
+      <div className="stats-grid">
+        <div className="card-minimal">
+          <h3>Total Spots</h3>
+          <p className="bigstat">{totalSpots}</p>
+          <p className="minor-muted">Current occupancy data</p>
+        </div>
+        <div className="card-minimal">
+          <h3>Occupied</h3>
+          <p className="bigstat">{occupiedSpots.length}</p>
+          <p className="minor-muted">In-use spots</p>
+        </div>
+        <div className="card-minimal">
+          <h3>Available</h3>
+          <p className="bigstat">{availableSpots}</p>
+          <p className="minor-muted">Open spots</p>
+        </div>
+        <div className="card-minimal">
+          <h3>Occupancy</h3>
+          <p className="bigstat">{occupancyPercentage}%</p>
+          <p className="minor-muted">Heatmap at glance</p>
+        </div>
+      </div>
+
       <VehicleTracker />
-      
+
       <TrafficChart />
-      
+
       <div className="occupancy-info">
         <div className="occupancy-card">
           <h3>Total Occupancy</h3>

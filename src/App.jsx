@@ -10,6 +10,7 @@ const Dashboard = lazy(() => import('./screens/Dashboard'))
 const AdminDashboard = lazy(() => import('./screens/AdminDashboard'))
 const Profile = lazy(() => import('./screens/Profile'))
 const Analytics = lazy(() => import('./screens/Analytics'))
+const Camera = lazy(() => import('./screens/Camera'))
 const Auth = lazy(() => import('./screens/Auth'))
 
 export default function App() {
@@ -54,6 +55,9 @@ export default function App() {
             <NavLink to="/analytics" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               <span className="nav-label">Analytics</span>
             </NavLink>
+            <NavLink to="/camera" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              <span className="nav-label">Camera</span>
+            </NavLink>
             <NavLink to="/admin" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
               <span className="nav-label">Admin Panel</span>
             </NavLink>
@@ -79,6 +83,14 @@ export default function App() {
                 element={
                   <ProtectedRoute isAuthenticated={isAuthenticated}>
                     <Analytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/camera"
+                element={
+                  <ProtectedRoute isAuthenticated={isAuthenticated}>
+                    <Camera />
                   </ProtectedRoute>
                 }
               />

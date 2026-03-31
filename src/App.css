@@ -245,6 +245,29 @@
   transition: background-color 0.3s ease;
 }
 
+.card-minimal {
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-minimal:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+}
+
+.minor-muted {
+  color: var(--text-secondary);
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .sidebar {

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Video } from 'expo-av'
 import {
   ActivityIndicator,
   Alert,
@@ -35,6 +36,41 @@ const API_BASE_URL =
     : FALLBACK_API_BASE
 
 const STATIC_ALERT_TIMESTAMP = new Date(Date.now() - 60000).toISOString()
+
+const FLOOR_CAMERA_URLS = {
+  1: '/Mockup%20Camera.mp4',
+  2: '/Mockup%20Camera%202.mp4',
+  3: '/Mockup%20Camera%203.mp4',
+  4: '/Mockup%20Camera%204.mp4',
+}
+
+function CameraViewer({ floor }) {
+  const videoRef = useRef(null)
+  const [status, setStatus] = useState(null)
+
+  const sourceUrl =
+    Platform.OS === 'web'
+      ? FLOOR_CAMERA_URLS[floor] || FLOOR_CAMERA_URLS[1]
+      : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+
+  return (
+    <View style={styles.cameraCard}>
+      <Text style={styles.cardTitle}>Live Floor {floor} Camera</Text>
+      <Video
+        ref={videoRef}
+        source={{ uri: sourceUrl }}
+        useNativeControls
+        resizeMode="cover"
+        isLooping
+        style={styles.video}
+        onPlaybackStatusUpdate={(update) => setStatus(update)}
+      />
+      <Text style={styles.smallMuted}>
+        {status?.isLoaded ? `Playback ${status.isPlaying ? 'playing' : 'paused'}` : 'Loading camera stream...'}
+      </Text>
+    </View>
+  )
+}
 
 function toTitle(value) {
   return value.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase())
@@ -187,6 +223,7 @@ function StatusScreen() {
   const [parkingData, setParkingData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [selectedCameraFloor, setSelectedCameraFloor] = useState(1)
 
   const fetchParking = useCallback(async () => {
     try {
@@ -255,6 +292,23 @@ function StatusScreen() {
       refreshControl={null}
     >
       <Text style={styles.dashboardTitle}>Parking Overview</Text>
+
+      <View style={styles.segment}>
+        {[1, 2, 3, 4].map((floor) => (
+          <Pressable
+            key={floor}
+            onPress={() => setSelectedCameraFloor(floor)}
+            style={[styles.segmentBtn, selectedCameraFloor === floor && styles.segmentBtnActive]}
+          >
+            <Text style={[styles.segmentText, selectedCameraFloor === floor && styles.segmentTextActive]}>
+              Floor {floor}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <CameraViewer floor={selectedCameraFloor} />
+
       <View style={styles.statsRow}>
         <View style={[styles.statCard, styles.statCardPrimary]}>
           <Text style={styles.statLabel}>Total</Text>
@@ -306,73 +360,68 @@ function StatusScreen() {
 }
 
 function AnalyticsScreen() {
-  const weeklyStats = {
-    totalRevenue: 4320,
-    totalVehicles: 365,
-    avgOccupancy: 85,
-    peakHour: '4-6 PM',
+  const stats = {
+    totalSpots: 12,
+    occupiedSpots: 7,
+    availableSpots: 5,
+    occupancyPercent: 58,
+    totalCameras: 12,
+    camerasOnline: 11,
+    openAlerts: 2,
   }
 
-  const vehicleTypes = [
-    { type: 'Sedan', percentage: 60 },
-    { type: 'SUV', percentage: 24 },
-    { type: 'Truck', percentage: 11 },
-    { type: 'Motorcycle', percentage: 5 },
-  ]
-
-  const peakHours = [
-    { hour: '6-8 AM', vehicles: 25 },
-    { hour: '8-10 AM', vehicles: 45 },
-    { hour: '10-12 PM', vehicles: 38 },
-    { hour: '12-2 PM', vehicles: 52 },
-    { hour: '2-4 PM', vehicles: 48 },
-    { hour: '4-6 PM', vehicles: 65 },
-    { hour: '6-8 PM', vehicles: 58 },
-    { hour: '8-10 PM', vehicles: 32 },
+  const floorOccupancy = [
+    { floor: 1, occupied: 5, total: 12 },
+    { floor: 2, occupied: 2, total: 12 },
+    { floor: 3, occupied: 7, total: 12 },
+    { floor: 4, occupied: 3, total: 12 },
   ]
 
   return (
     <ScrollView style={styles.tabContent} contentContainerStyle={styles.sectionGap}>
-      <Text style={styles.dashboardTitle}>Analytics Overview</Text>
+      <Text style={styles.dashboardTitle}>Parking Analytics</Text>
+
       <View style={styles.statsRow}>
         <View style={[styles.statCard, styles.statCardPrimary]}>
-          <Text style={styles.statLabel}>Revenue</Text>
-          <Text style={styles.statValue}>${weeklyStats.totalRevenue}</Text>
+          <Text style={styles.statLabel}>Occupancy</Text>
+          <Text style={styles.statValue}>{stats.occupancyPercent}%</Text>
         </View>
         <View style={[styles.statCard, styles.statCardWarning]}>
-          <Text style={styles.statLabel}>Avg Occupancy</Text>
-          <Text style={styles.statValue}>{weeklyStats.avgOccupancy}%</Text>
+          <Text style={styles.statLabel}>Available</Text>
+          <Text style={styles.statValue}>{stats.availableSpots}</Text>
         </View>
         <View style={[styles.statCard, styles.statCardInfo]}>
-          <Text style={styles.statLabel}>Peak Hour</Text>
-          <Text style={styles.statValue}>{weeklyStats.peakHour}</Text>
+          <Text style={styles.statLabel}>Cameras Online</Text>
+          <Text style={styles.statValue}>{stats.camerasOnline}/{stats.totalCameras}</Text>
         </View>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>System Analytics</Text>
-        <Text style={styles.smallMuted}>Total Vehicles: {weeklyStats.totalVehicles}</Text>
-        <Text style={styles.smallMuted}>Average Occupancy: {weeklyStats.avgOccupancy}%</Text>
-        <Text style={styles.smallMuted}>Peak Hour: {weeklyStats.peakHour}</Text>
-        <Text style={styles.smallMuted}>Revenue: ${weeklyStats.totalRevenue}</Text>
+        <Text style={styles.cardTitle}>Current System Status</Text>
+        <Text style={styles.rowText}>Occupied Spots: {stats.occupiedSpots}</Text>
+        <Text style={styles.rowText}>Available Spots: {stats.availableSpots}</Text>
+        <Text style={styles.rowText}>Cameras online: {stats.camerasOnline}</Text>
+        <Text style={styles.rowText}>Open alerts: {stats.openAlerts}</Text>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Vehicle Types</Text>
-        {vehicleTypes.map((item) => (
-          <Text key={item.type} style={styles.rowText}>
-            {item.type}: {item.percentage}%
-          </Text>
+        <Text style={styles.cardTitle}>Floor Occupancy</Text>
+        {floorOccupancy.map((floorInfo) => (
+          <View key={floorInfo.floor} style={styles.rowHorizontal}>
+            <Text style={styles.rowText}>Floor {floorInfo.floor}</Text>
+            <Text style={styles.smallMuted}>
+              {floorInfo.occupied}/{floorInfo.total} occupied
+            </Text>
+          </View>
         ))}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Peak Hours Traffic</Text>
-        {peakHours.map((item) => (
-          <Text key={item.hour} style={styles.rowText}>
-            {item.hour}: {item.vehicles} vehicles
-          </Text>
-        ))}
+        <Text style={styles.cardTitle}>Live Camera Mapping</Text>
+        <Text style={styles.smallMuted}>Floor 1 → Camera 1</Text>
+        <Text style={styles.smallMuted}>Floor 2 → Camera 2</Text>
+        <Text style={styles.smallMuted}>Floor 3 → Camera 3</Text>
+        <Text style={styles.smallMuted}>Floor 4 → Camera 4</Text>
       </View>
     </ScrollView>
   )
@@ -529,6 +578,7 @@ function AdminScreen() {
               </Pressable>
             ))}
           </View>
+          <CameraViewer floor={selectedFloor} />
           <View style={styles.grid}>
             {Array.from({ length: 12 }, (_, i) => {
               const occupied = occupancyMap[selectedFloor]?.includes(i)
@@ -788,6 +838,20 @@ const styles = StyleSheet.create({
     borderColor: '#e4e6eb',
     gap: 8,
   },
+  cameraCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e4e6eb',
+    marginVertical: 10,
+  },
+  video: {
+    width: '100%',
+    height: 210,
+    borderRadius: 10,
+    backgroundColor: '#000',
+  },
   authCard: {
     margin: 16,
     marginTop: 40,
@@ -954,6 +1018,12 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     color: '#ffffff',
+  },
+  rowHorizontal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   alertRow: {
     paddingVertical: 8,

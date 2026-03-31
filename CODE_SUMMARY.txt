@@ -1,0 +1,139 @@
+Parking Lot Manager - Codebase Study Guide
+
+1. Root
+-------
+- package.json: scripts, dependencies, start/ lint / build commands, project metadata.
+- vite.config.js: Vite config for web app (plugins, build options, alias, optimized deps).
+- README.md: full architecture, setup instructions, endpoints and feature overview.
+- eslint.config.js/perhaps postcss etc.
+
+2. src/ (Web App)
+-----------------
+- App.jsx: Main router and layout with Header, sidebar, routes for dashboard, analytics, camera, admin, profile.
+- main.jsx: React app entry with StrictMode and BrowserRouter.
+- App.css: global design tokens, colors, theme variables, responsive layout, sidebar + header styling.
+
+Components:
+- Header.jsx: top header, theme toggle, user greeting, nav, custom getViewLabel / getUserGreeting.
+- ParkingSpot.jsx: grid item for parking spots (visual status and toggle behavior).
+- StatusBadge.jsx: helper badge component for occupancy states.
+- VehicleTracker.jsx: probably map/tracker UI.
+- TrafficChart.jsx: chart component plotting traffic.
+- LoadingSpinner.jsx, ProtectedRoute.jsx etc.
+- CameraPlayer.jsx: centralized camera viewer with URL source management (local video, external URL, autocache busting, Reload button, status text). This is key camera logic used by multiple screens.
+
+Screens:
+- Dashboard.jsx: user dashboard with occupancy overview, vehicle tracker, chart; updated minimalist cards; spot toggling via API.
+- AdminDashboard.jsx: admin panel with login + tabs (overview/cctv/alerts), floor selection, camera list, per-floor camera modal, dynamic stats, alerts list. Uses CameraPlayer and floorCameraUrlMap.
+- Camera.jsx: page using CameraPlayer for web camera view.
+- Analytics.jsx: not reviewed but includes analytics grid.
+- Auth.jsx: auth page (login/signup form) in web.
+- Profile.jsx: profile page.
+
+3. mobile/ (Mobile app)
+-----------------------
+- package.json: mobile deps including expo, react-native-web, expo-camera/expo-av.
+- mobile/vite.config.js: root for mobile app, alias react-native to react-native-web, expo-camera/expo-av aliases also for web build stubs.
+- metal files: index.html, main.jsx, babel config.
+
+- App.js: full mobile app with tabs (parking status, analytics, admin, profile). Includes:
+  - AuthScreen (login/signup via AsyncStorage local users)
+  - StatusScreen (parking data fetch from API, toggle spot, includes CameraViewer floor camera selector)
+  - AnalyticsScreen (parking-focused analytics; occupancy/camera health/floor maps)
+  - AdminScreen (admin auth, stats, monitoring, alerts, floor slot map)
+  - ProfileScreen (user profile storage + update)
+  - CameraViewer helper (expo-av Video, floor source mapping)
+  - base styles for cards, tabs, grid, etc.
+- mobile/screens/Camera.jsx: expo-camera live feed component (native camera snapshot). This is used in mobile UI.
+- mobile/stubs/expo-camera.js: web fallback stub to prevent import errors during web build.
+
+4. server/
+-----------
+- index.js: Express API for parking lot data, cctv, alerts, auth, etc.
+- includes routes to get and update spot occupancy, camera status, alert generation.
+
+5. Public videos
+----------------
+- public/Mockup Camera.mp4
+- public/Mockup Camera 2.mp4
+- public/Mockup Camera 3.mp4
+- public/Mockup Camera 4.mp4
+
+6. Notes
+--------
+- Key shared camera logic:
+  - Web: CameraPlayer uses local and external streams, with reload-on-end and status badge.
+  - Mobile: CameraViewer uses expo-av Video, floor-based URL mapping for mock video.
+  - useEffect auto-refresh in Admin: fetchAll interval update.
+- Theme & styling are mostly in App.css and mobile styles in App.js.
+- Authentication is local mock (admin role and users in AsyncStorage or localStorage).
+
+Use this file as a quick map for understanding where each behavior is implemented.
+
+7. Detailed code path references (specific functions / logic)
+-----------------------------------------------------------
+
+Root files:
+- package.json scripts: dev, dev:mobile, build, build:mobile, lint, server, server:start, mobile:install, mobile:go, start-web, start.
+- vite.config.js: defineConfig, plugins [react()], build minify terser, optimizeDeps; web alias not used except in root.
+
+Web app (src):
+- main.jsx: createRoot(document.getElementById('root')).render(<StrictMode><BrowserRouter><App/></BrowserRouter></StrictMode>).
+- App.jsx:
+  - useLocation() + useAuth() hook.
+  - authLoading state and redirects for /auth and protected routes.
+  - routes: / (Dashboard), /analytics, /camera, /admin/*, /profile.
+  - uses ProtectedRoute component.
+- Header.jsx:
+  - useLocation() for getViewLabel:
+    - /profile -> Profile
+    - /admin -> Admin Panel
+    - /analytics -> Analytics
+    - default -> Parking Status
+  - getUserGreeting logic for admin path vs user fullName.
+  - theme toggle toggles CSS data-theme in localStorage.
+- Auth.jsx:
+  - state: isLogin, formData, error, loading.
+  - handleSubmit (login/signup): localStorage users array; validations; set parkingAuth in localStorage; call onLogin(user).
+- Dashboard.jsx:
+  - state: totalSpots, occupiedSpots, occupancyPercentage, loading.
+  - toggleSpot(spotNumber): POST to API /api/parking-lot/toggle/:spotNumber, update occupied spots and percentage.
+  - parkingSpots useMemo build spot data, availableSpots useMemo.
+  - UI: stats grid, VehicleTracker, TrafficChart, parking visually.
+- CameraPlayer.jsx:
+  - constants: LOCAL_VIDEO_PATH '/Mockup%20Camera.mp4'.
+  - state: externalUrl (initialUrl), currentUrl(t since change), playerState.
+  - useEffect on externalUrl updates currentUrl.
+  - resetVideo builds new t, sets playerState loading, onVideoEvent('reset').
+  - handleEnded sets ended + onVideoEvent('ended'), then resetVideo.
+  - renders source text + Reload button + <video> / <img> / <iframe> based on extension.
+- AdminDashboard.jsx:
+  - states: stats, cctvCameras, alerts, activeTab, loading, selectedCamera, selectedFloor, isAuthenticated, username, password, loginError.
+  - handleLogin validates admin credentials, set isAuthenticated true, then loading true, reset bool with timeout 250ms.
+  - fetchAll useCallback mutates stats/cctvCameras/alerts randomly for demo; useEffect runs at 15s interval.
+  - occupancyMap / getFloorOccupancy.
+  - floorCameraUrlMap map 1 through 4 src.
+  - third tab cctv uses CameraPlayer(initialUrl=floorCameraUrlMap[selectedFloor]).
+  - selectedCamera modal uses same selected camera url.
+- Analytics.jsx: show stats and chart data (not actively edited extended before). 
+- Profile.jsx reads user, updates profile.
+
+Mobile app (/mobile):
+- App.js:
+  - Constants: STORAGE_KEYS, TABS, ADMIN_USERNAME/PASSWORD.
+  - API_BASE_URL: Android emulator host mapping.
+  - FLOOR_CAMERA_URLS mapping 1..4 to local videos.
+  - CameraViewer({ floor }): Video from expo-av with sourceUrl web floor mapping / mobile demo sample video.
+  - AuthScreen: user signup/login via AsyncStorage (users data, auth data), toggles isLogin.
+  - StatusScreen: fetchParking from API /api/parking-lot; toggleSpot toggles backend; status cards + grid.
+  - AnalyticsScreen: parking-centric stats + floor occupancy + camera mapping.
+  - AdminScreen: admin creds, overview/monitoring/alerts tabs, occupancyMap, cctv, controls.
+  - ProfileScreen: loads and saves profile in AsyncStorage.
+  - App root: authLoading check, onLogin handle setting user auth, tab management.
+- mobile/vite.config.js:
+  - root: mobile, react plugin, alias react-native to react-native-web + expo-camera/expo-av to stub path.
+- mobile/stubs/expo-camera.js: simple web stub object with requestCameraPermissionsAsync etc.
+- mobile/screens/Camera.jsx: expo-camera component with requestCameraPermissionsAsync, Camera component, snapshot preview.
+
+Server:
+- server/index.js: Express endpoints for /api/parking-lot, /api/alerts, /api/activity-history, /api/cctv, /api/stats, etc. (state in memory).
