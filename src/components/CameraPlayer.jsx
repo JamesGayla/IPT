@@ -26,10 +26,10 @@ export default function CameraPlayer({ initialUrl = LOCAL_VIDEO_PATH, hideContro
 
   return (
     <section style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      <div style={{ padding: 12, background: '#f4f6f8', border: '1px solid #dbe2e8', borderRadius: 8 }}>
-        <div style={{ marginBottom: 6, fontWeight: 600 }}>Camera source</div>
+      <div style={{ padding: 12, background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 8 }}>
+        <div style={{ marginBottom: 6, fontWeight: 600, color: 'var(--text-primary)' }}>Camera source</div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <span style={{ flex: 1, color: '#374151' }}>Mockup Camera (local stream)</span>
+          <span style={{ flex: 1, color: 'var(--text-primary)' }}>Mockup Camera (local stream)</span>
           <button onClick={() => resetVideo()} style={{ padding: '10px 14px', borderRadius: '6px', border: 'none', backgroundColor: '#1d4ed8', color: '#fff', cursor: 'pointer' }}>
             Reload
           </button>

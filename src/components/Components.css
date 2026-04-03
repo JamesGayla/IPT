@@ -40,7 +40,11 @@
 }
 
 .parking-spot.occupied {
+<<<<<<< HEAD
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+=======
+  background: linear-gradient(135deg, #fee2e2 0%, #ca1f1f 100%);
+>>>>>>> 32915dc (Dark Theme UI Update)
   border-color: #ef4444;
 }
 

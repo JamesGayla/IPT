@@ -1,3 +1,10 @@
 {
+<<<<<<< HEAD
   "urlRandomness": "pteMHbk"
+=======
+  "urlRandomness": "pteMHbk",
+  "dev": true,
+  "minify": false,
+  "https": false
+>>>>>>> 32915dc (Dark Theme UI Update)
 }
