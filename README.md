@@ -183,6 +183,19 @@ Default test users:
 - `GET /api/stats` - Get system statistics
 - `GET /api/health` - Health check
 
+## 📦 Vercel Deployment
+This repository now includes a Vercel deployment setup for the FastAPI backend.
+
+- `vercel.json` routes `/api/*` to the Python serverless function
+- `api/main.py` imports `server.main.app` and exposes FastAPI
+- `requirements.txt` at repo root contains Python dependencies
+
+Deploy from the repo root with Vercel and the API will be available as serverless endpoints.
+
+Example:
+- `https://<your-app>.vercel.app/api/parking-lot`
+- `https://<your-app>.vercel.app/api/health`
+
 ## 🎯 Features
 
 ### Web App (Admin Dashboard)
