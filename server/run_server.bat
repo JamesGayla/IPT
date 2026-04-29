@@ -1,3 +1,4 @@
 @echo off
 echo Starting Parking Lot Manager API Server...
-C:/Users/User/AppData/Local/Python/pythoncore-3.14-64/python.exe main.py
+python main.py
+pause
