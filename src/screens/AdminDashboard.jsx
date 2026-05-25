@@ -3,13 +3,19 @@ import CameraPlayer from '../components/CameraPlayer'
 import './AdminDashboard.css'
 
 const DEFAULT_ALERT_TIMESTAMP = new Date(Date.now() - 60000)
+const INITIAL_OCCUPANCY_MAP = {
+  1: [0, 2, 4, 7, 9],
+  2: [1, 3, 5, 8, 10],
+  3: [0, 3, 6, 9, 11],
+  4: [1, 4, 7]
+}
 
 function AdminDashboard() {
   const [stats, setStats] = useState({
     totalSpots: 12,
-    occupiedSpots: 6,
-    availableSpots: 6,
-    occupancyPercentage: 50,
+    occupiedSpots: INITIAL_OCCUPANCY_MAP[1].length,
+    availableSpots: 12 - INITIAL_OCCUPANCY_MAP[1].length,
+    occupancyPercentage: Math.round((INITIAL_OCCUPANCY_MAP[1].length / 12) * 100),
     totalAlerts: 2,
     cameraCount: 12
   })
@@ -27,6 +33,12 @@ function AdminDashboard() {
     { spotNumber: 10, status: 'active', occupancyDetected: false, confidence: 96, lastUpdate: new Date() },
     { spotNumber: 11, status: 'active', occupancyDetected: true, confidence: 99, lastUpdate: new Date() }
   ])
+  const [occupancyMap, setOccupancyMap] = useState({
+    1: [0, 2, 4, 7, 9],
+    2: [1, 3, 5, 8, 10],
+    3: [0, 3, 6, 9, 11],
+    4: [1, 4, 7]
+  })
   const [alerts, setAlerts] = useState([
     { id: 1, type: 'HIGH_OCCUPANCY', message: 'Parking lot at 50% capacity', timestamp: new Date(), severity: 'warning' },
     { id: 2, type: 'SPACE_AVAILABLE', message: 'New parking spaces now available on Floor 2', timestamp: DEFAULT_ALERT_TIMESTAMP, severity: 'info' }
@@ -40,13 +52,23 @@ function AdminDashboard() {
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
 
+  const calculateStats = useCallback((map, floor) => {
+    const occupiedSpots = (map[floor] || []).length
+    const totalSpots = 12
+
+    return {
+      totalSpots,
+      occupiedSpots,
+      availableSpots: Math.max(0, totalSpots - occupiedSpots),
+      occupancyPercentage: Math.round((occupiedSpots / totalSpots) * 100)
+    }
+  }, [])
+
   const fetchAll = useCallback(() => {
     // In a real app this would call APIs.
     setStats(prev => ({
       ...prev,
-      occupiedSpots: Math.min(12, Math.max(0, prev.occupiedSpots + (Math.random() > 0.5 ? 1 : -1))),
-      availableSpots: Math.max(0, 12 - Math.min(12, Math.max(0, prev.occupiedSpots + (Math.random() > 0.5 ? 1 : -1)))),
-      occupancyPercentage: Math.round((Math.min(12, Math.max(0, prev.occupiedSpots + (Math.random() > 0.5 ? 1 : -1))) / 12) * 100),
+      ...calculateStats(occupancyMap, selectedFloor),
       totalAlerts: Math.max(0, prev.totalAlerts + (Math.random() > 0.67 ? 1 : 0))
     }))
 
@@ -60,7 +82,7 @@ function AdminDashboard() {
       ...alert,
       timestamp: new Date()
     })))
-  }, [])
+  }, [calculateStats, occupancyMap])
 
   useEffect(() => {
     const startRefresh = () => {
@@ -75,6 +97,13 @@ function AdminDashboard() {
       clearInterval(interval)
     }
   }, [fetchAll])
+
+  useEffect(() => {
+    setStats(prev => ({
+      ...prev,
+      ...calculateStats(occupancyMap, selectedFloor)
+    }))
+  }, [occupancyMap, selectedFloor, calculateStats])
 
   const handleLogin = useCallback(async (e) => {
     e.preventDefault()
@@ -101,12 +130,32 @@ function AdminDashboard() {
     setActiveTab('overview')
   }, [])
 
-  const occupancyMap = useMemo(() => ({
-    1: [0, 2, 4, 7, 9],
-    2: [1, 3, 5, 8, 10],
-    3: [0, 3, 6, 9, 11],
-    4: [1, 4, 7]
-  }), [])
+  const toggleSpotOccupancy = useCallback((floor, spotIndex) => {
+    setOccupancyMap(prev => {
+      const currentFloor = new Set(prev[floor] || [])
+      if (currentFloor.has(spotIndex)) {
+        currentFloor.delete(spotIndex)
+      } else {
+        currentFloor.add(spotIndex)
+      }
+
+      const nextMap = {
+        ...prev,
+        [floor]: Array.from(currentFloor).sort((a, b) => a - b)
+      }
+
+      setStats(prevStats => ({
+        ...prevStats,
+        ...calculateStats(nextMap, floor)
+      }))
+
+      return nextMap
+    })
+  }, [calculateStats])
+
+  const getFloorOccupancy = useCallback((floor, spotIndex) => {
+    return occupancyMap[floor]?.includes(spotIndex) || false
+  }, [occupancyMap])
 
   const floorCameraUrlMap = useMemo(() => ({
     1: '/Mockup%20Camera.mp4',
@@ -114,10 +163,6 @@ function AdminDashboard() {
     3: '/Mockup%20Camera%203.mp4',
     4: '/Mockup%20Camera%204.mp4'
   }), [])
-
-  const getFloorOccupancy = useCallback((floor, spotIndex) => {
-    return occupancyMap[floor]?.includes(spotIndex) || false
-  }, [occupancyMap])
 
   if (!isAuthenticated) {
     return (
@@ -264,6 +309,7 @@ function AdminDashboard() {
 
           <div className="floor-view">
             <h4>Floor {selectedFloor} - Slot Overview</h4>
+            <p className="muted-text">Click a spot to toggle occupancy for the selected floor.</p>
             <div className="floor-map">
               <div className="floor-content">
                 <p>Floor {selectedFloor} Layout</p>
@@ -274,10 +320,17 @@ function AdminDashboard() {
                       <div
                         key={i}
                         className={`spot-preview ${isOccupied ? 'occupied' : 'empty'}`}
-                        onClick={() => setSelectedCamera({spotNumber: i, floor: selectedFloor})}
+                        onClick={() => toggleSpotOccupancy(selectedFloor, i)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            toggleSpotOccupancy(selectedFloor, i)
+                          }
+                        }}
                       >
                         <span>{i + 1}</span>
-                        {isOccupied ? '●' : '○'}
+                        {isOccupied ? 'Occupied' : 'Empty'}
                       </div>
                     )
                   })}

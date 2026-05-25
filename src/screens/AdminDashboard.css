@@ -550,18 +550,13 @@
   font-size: 16px;
 }
 
-.floor-map {
-  background: var(--bg-secondary);
-  border: 1px solid #e8eef5;
-  border-radius: 8px;
-  padding: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.muted-text {
+  color: var(--text-secondary);
+  margin: 0 0 12px 0;
+  font-size: 13px;
 }
 
 .floor-content {
-  background-color: var(--bg-primary);
   text-align: center;
   width: 100%;
 }
