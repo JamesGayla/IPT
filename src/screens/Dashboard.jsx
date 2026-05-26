@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useState, useEffect, useCallback, useMemo } from 'react'
+=======
+import { useState, useCallback, useMemo, useEffect } from 'react'
+>>>>>>> fdc0841c15714d2b8128e1e6379886374638ea3e
 import './Dashboard.css'
 import ParkingSpot from '../components/ParkingSpot'
 import VehicleTracker from '../components/VehicleTracker'
@@ -8,6 +12,7 @@ const API_BASE_URL = 'http://localhost:3001'
 
 function Dashboard() {
   const [totalSpots] = useState(12)
+<<<<<<< HEAD
   const [occupiedSpots, setOccupiedSpots] = useState([])
   const [occupancyPercentage, setOccupancyPercentage] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -26,6 +31,31 @@ function Dashboard() {
       console.error('Failed to load parking lot:', error)
       setLoading(false)
     }
+=======
+  const [occupiedSpots, setOccupiedSpots] = useState([1, 3, 4, 5, 7, 8])
+  const [occupancyPercentage, setOccupancyPercentage] = useState(50)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const fetchParkingData = async () => {
+      setLoading(true)
+      try {
+        const response = await fetch('http://localhost:3001/api/parking-lot')
+        if (!response.ok) {
+          throw new Error('Unable to fetch parking data')
+        }
+        const data = await response.json()
+        setOccupiedSpots(data.occupiedSpots)
+        setOccupancyPercentage(data.occupancyPercentage)
+      } catch (error) {
+        console.error('Failed to load parking data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchParkingData()
+>>>>>>> fdc0841c15714d2b8128e1e6379886374638ea3e
   }, [])
 
   const toggleSpot = useCallback(async (spotNumber) => {

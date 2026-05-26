@@ -270,6 +270,7 @@ function StatusScreen() {
     [setParkingData],
   )
 
+<<<<<<< HEAD
   const confirmToggleSpot = useCallback(
     (spotNumber, currentlyOccupied) => {
       Alert.alert(
@@ -279,6 +280,20 @@ function StatusScreen() {
           { text: 'Cancel', style: 'cancel' },
           { text: 'Confirm', onPress: () => toggleSpot(spotNumber) }
         ]
+=======
+  const handleSpotPress = useCallback(
+    (spot) => {
+      Alert.alert(
+        `Spot A${spot.id + 1}`,
+        spot.occupied ? 'This spot is currently occupied.' : 'This spot is available.',
+        [
+          { text: 'Close', style: 'cancel' },
+          {
+            text: spot.occupied ? 'Mark Available' : 'Mark Occupied',
+            onPress: () => toggleSpot(spot.id),
+          },
+        ],
+>>>>>>> fdc0841c15714d2b8128e1e6379886374638ea3e
       )
     },
     [toggleSpot],
@@ -335,11 +350,16 @@ function StatusScreen() {
         {spots.map((spot) => (
           <Pressable
             key={spot.id}
+<<<<<<< HEAD
             onPress={() => confirmToggleSpot(spot.id, spot.occupied)}
             style={[
               styles.tableRow,
               spot.occupied ? styles.spotOccupiedRow : styles.spotAvailableRow,
             ]}
+=======
+            onPress={() => handleSpotPress(spot)}
+            style={[styles.spotBtn, spot.occupied ? styles.spotOccupied : styles.spotAvailable]}
+>>>>>>> fdc0841c15714d2b8128e1e6379886374638ea3e
           >
             <Text style={styles.tableCell}>A{spot.id + 1}</Text>
             <Text style={styles.tableCell}>{spot.occupied ? 'Occupied' : 'Empty'}</Text>
