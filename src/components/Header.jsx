@@ -47,7 +47,7 @@ const Header = memo(function Header({ onLogout, user }) {
   return (
     <header className="app-header">
       <div className="header-content">
-        <div className="brand" onClick={() => navigate('/') }>
+        <div className="brand" onClick={() => navigate(location.pathname.includes('/admin') ? '/admin' : '/')}>
           <img src={parkingLogo} alt="Parking Logo" className="brand-icon" />
           <h1>ParkFlow</h1>
         </div>

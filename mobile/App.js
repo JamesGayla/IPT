@@ -223,7 +223,6 @@ function StatusScreen() {
   const [parkingData, setParkingData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [selectedCameraFloor, setSelectedCameraFloor] = useState(1)
 
   const fetchParking = useCallback(async () => {
     try {
@@ -271,6 +270,20 @@ function StatusScreen() {
     [setParkingData],
   )
 
+  const confirmToggleSpot = useCallback(
+    (spotNumber, currentlyOccupied) => {
+      Alert.alert(
+        'Confirm parking update',
+        `Mark spot A${spotNumber + 1} as ${currentlyOccupied ? 'empty' : 'occupied'}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Confirm', onPress: () => toggleSpot(spotNumber) }
+        ]
+      )
+    },
+    [toggleSpot],
+  )
+
   const spots = useMemo(() => {
     if (!parkingData) return []
     return Array.from({ length: parkingData.totalSpots }, (_, i) => ({
@@ -292,22 +305,6 @@ function StatusScreen() {
       refreshControl={null}
     >
       <Text style={styles.dashboardTitle}>Parking Overview</Text>
-
-      <View style={styles.segment}>
-        {[1, 2, 3, 4].map((floor) => (
-          <Pressable
-            key={floor}
-            onPress={() => setSelectedCameraFloor(floor)}
-            style={[styles.segmentBtn, selectedCameraFloor === floor && styles.segmentBtnActive]}
-          >
-            <Text style={[styles.segmentText, selectedCameraFloor === floor && styles.segmentTextActive]}>
-              Floor {floor}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <CameraViewer floor={selectedCameraFloor} />
 
       <View style={styles.statsRow}>
         <View style={[styles.statCard, styles.statCardPrimary]}>
@@ -334,14 +331,19 @@ function StatusScreen() {
         <Text style={styles.smallMuted}>API: {API_BASE_URL}</Text>
       </View>
 
-      <View style={styles.grid}>
+      <View style={styles.table}>
         {spots.map((spot) => (
           <Pressable
             key={spot.id}
-            onPress={() => toggleSpot(spot.id)}
-            style={[styles.spotBtn, spot.occupied ? styles.spotOccupied : styles.spotAvailable]}
+            onPress={() => confirmToggleSpot(spot.id, spot.occupied)}
+            style={[
+              styles.tableRow,
+              spot.occupied ? styles.spotOccupiedRow : styles.spotAvailableRow,
+            ]}
           >
-            <Text style={styles.spotText}>A{spot.id + 1}</Text>
+            <Text style={styles.tableCell}>A{spot.id + 1}</Text>
+            <Text style={styles.tableCell}>{spot.occupied ? 'Occupied' : 'Empty'}</Text>
+            <Text style={styles.tableAction}>{spot.occupied ? 'Free' : 'Reserve'}</Text>
           </Pressable>
         ))}
       </View>
@@ -995,6 +997,28 @@ const styles = StyleSheet.create({
   spotText: {
     fontWeight: '700',
     color: '#0f172a',
+  },
+  table: {
+    gap: 8,
+    marginTop: 12,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  tableCell: {
+    flex: 1,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  tableAction: {
+    color: '#2563eb',
+    fontWeight: '700',
   },
   segment: {
     flexDirection: 'row',

@@ -2,6 +2,8 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import CameraPlayer from '../components/CameraPlayer'
 import './AdminDashboard.css'
 
+const API_BASE_URL = 'http://localhost:3001'
+const LIVE_CAMERA_URL = 'http://127.0.0.1:4747/video'
 const DEFAULT_ALERT_TIMESTAMP = new Date(Date.now() - 60000)
 const INITIAL_OCCUPANCY_MAP = {
   1: [0, 2, 4, 7, 9],
@@ -33,12 +35,7 @@ function AdminDashboard() {
     { spotNumber: 10, status: 'active', occupancyDetected: false, confidence: 96, lastUpdate: new Date() },
     { spotNumber: 11, status: 'active', occupancyDetected: true, confidence: 99, lastUpdate: new Date() }
   ])
-  const [occupancyMap, setOccupancyMap] = useState({
-    1: [0, 2, 4, 7, 9],
-    2: [1, 3, 5, 8, 10],
-    3: [0, 3, 6, 9, 11],
-    4: [1, 4, 7]
-  })
+  const [occupiedSpots, setOccupiedSpots] = useState(INITIAL_OCCUPANCY_MAP[1])
   const [alerts, setAlerts] = useState([
     { id: 1, type: 'HIGH_OCCUPANCY', message: 'Parking lot at 50% capacity', timestamp: new Date(), severity: 'warning' },
     { id: 2, type: 'SPACE_AVAILABLE', message: 'New parking spaces now available on Floor 2', timestamp: DEFAULT_ALERT_TIMESTAMP, severity: 'info' }
@@ -47,42 +44,62 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(false)
   const [selectedCamera, setSelectedCamera] = useState(null)
   const [selectedFloor, setSelectedFloor] = useState(1)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [loginError, setLoginError] = useState('')
 
-  const calculateStats = useCallback((map, floor) => {
-    const occupiedSpots = (map[floor] || []).length
+  const calculateStats = useCallback((occupiedSpots) => {
+    const occupied = occupiedSpots.length
     const totalSpots = 12
 
     return {
       totalSpots,
-      occupiedSpots,
-      availableSpots: Math.max(0, totalSpots - occupiedSpots),
-      occupancyPercentage: Math.round((occupiedSpots / totalSpots) * 100)
+      occupiedSpots: occupied,
+      availableSpots: Math.max(0, totalSpots - occupied),
+      occupancyPercentage: Math.round((occupied / totalSpots) * 100)
+    }
+  }, [])
+
+  const fetchParkingStatus = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/parking-lot`)
+      if (!response.ok) {
+        throw new Error('Failed to load parking status')
+      }
+      const data = await response.json()
+      setOccupiedSpots(data.occupiedSpots)
+      setStats(prev => ({
+        ...prev,
+        ...calculateStats(data.occupiedSpots)
+      }))
+    } catch (error) {
+      console.error('Unable to fetch parking status:', error)
+    }
+  }, [calculateStats])
+
+  const fetchCctvStatus = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/cctv`)
+      if (!response.ok) return
+      const cameras = await response.json()
+      setCctvCameras(cameras.map(cam => ({
+        ...cam,
+        lastUpdate: cam.lastUpdate ? new Date(cam.lastUpdate) : new Date()
+      })))
+      setStats(prev => ({
+        ...prev,
+        cameraCount: cameras.length
+      }))
+    } catch (error) {
+      console.error('Unable to fetch CCTV status:', error)
     }
   }, [])
 
   const fetchAll = useCallback(() => {
-    // In a real app this would call APIs.
-    setStats(prev => ({
-      ...prev,
-      ...calculateStats(occupancyMap, selectedFloor),
-      totalAlerts: Math.max(0, prev.totalAlerts + (Math.random() > 0.67 ? 1 : 0))
-    }))
-
-    setCctvCameras(prev => prev.map(cam => ({
-      ...cam,
-      lastUpdate: new Date(),
-      confidence: Math.round(90 + Math.random() * 10)
-    })))
-
+    fetchParkingStatus()
+    fetchCctvStatus()
     setAlerts(prev => prev.map(alert => ({
       ...alert,
       timestamp: new Date()
     })))
-  }, [calculateStats, occupancyMap])
+  }, [fetchParkingStatus, fetchCctvStatus])
 
   useEffect(() => {
     const startRefresh = () => {
@@ -98,114 +115,52 @@ function AdminDashboard() {
     }
   }, [fetchAll])
 
-  useEffect(() => {
-    setStats(prev => ({
-      ...prev,
-      ...calculateStats(occupancyMap, selectedFloor)
-    }))
-  }, [occupancyMap, selectedFloor, calculateStats])
-
-  const handleLogin = useCallback(async (e) => {
-    e.preventDefault()
-    setLoginError('')
-    
-    const ADMIN_USERNAME = 'admin'
-    const ADMIN_PASSWORD = 'admin123'
-    
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true)
-      setUsername('')
-      setPassword('')
-      setLoading(true)
-
-      // Simulate async data load, then render dashboard
-      setTimeout(() => setLoading(false), 250)
-    } else {
-      setLoginError('Invalid username or password')
-    }
-  }, [username, password])
-
   const handleLogout = useCallback(() => {
-    setIsAuthenticated(false)
     setActiveTab('overview')
   }, [])
 
-  const toggleSpotOccupancy = useCallback((floor, spotIndex) => {
-    setOccupancyMap(prev => {
-      const currentFloor = new Set(prev[floor] || [])
-      if (currentFloor.has(spotIndex)) {
-        currentFloor.delete(spotIndex)
-      } else {
-        currentFloor.add(spotIndex)
+  const toggleSpotOccupancy = useCallback(async (floor, spotIndex) => {
+    const spotLabel = `A${spotIndex + 1}`
+    const currentlyOccupied = occupiedSpots.includes(spotIndex)
+
+    if (!window.confirm(`Confirm ${currentlyOccupied ? 'freeing' : 'occupying'} spot ${spotLabel}?`)) {
+      return
+    }
+
+    try {
+      setLoading(true)
+      const response = await fetch(`${API_BASE_URL}/api/parking-lot/toggle/${spotIndex}`, {
+        method: 'POST'
+      })
+
+      if (!response.ok) {
+        throw new Error('Unable to update parking spot')
       }
 
-      const nextMap = {
-        ...prev,
-        [floor]: Array.from(currentFloor).sort((a, b) => a - b)
-      }
-
+      const data = await response.json()
+      setOccupiedSpots(data.occupiedSpots)
       setStats(prevStats => ({
         ...prevStats,
-        ...calculateStats(nextMap, floor)
+        ...calculateStats(data.occupiedSpots)
       }))
-
-      return nextMap
-    })
-  }, [calculateStats])
+    } catch (error) {
+      console.error('Failed to update parking spot:', error)
+      window.alert('Unable to update parking spot. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }, [calculateStats, occupiedSpots])
 
   const getFloorOccupancy = useCallback((floor, spotIndex) => {
-    return occupancyMap[floor]?.includes(spotIndex) || false
-  }, [occupancyMap])
+    return occupiedSpots.includes(spotIndex)
+  }, [occupiedSpots])
 
   const floorCameraUrlMap = useMemo(() => ({
-    1: '/Mockup%20Camera.mp4',
-    2: '/Mockup%20Camera%202.mp4',
-    3: '/Mockup%20Camera%203.mp4',
-    4: '/Mockup%20Camera%204.mp4'
+    1: LIVE_CAMERA_URL,
+    2: LIVE_CAMERA_URL,
+    3: LIVE_CAMERA_URL,
+    4: LIVE_CAMERA_URL
   }), [])
-
-  if (!isAuthenticated) {
-    return (
-      <div className="login-container">
-        <div className="login-box">
-          <div className="login-header">
-            <h1>ParkFlow</h1>
-            <h2>Admin Login</h2>
-          </div>
-          
-          <form onSubmit={handleLogin} className="login-form">
-            {loginError && <div className="login-error">{loginError}</div>}
-            
-            <div className="form-group">
-              <label htmlFor="username">Username</label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
-                required
-              />
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-            
-            <button type="submit" className="login-btn">Sign In</button>
-          </form>
-        </div>
-      </div>
-    )
-  }
 
   if (loading) {
     return <div className="admin-dashboard"><p>Loading...</p></div>
@@ -218,28 +173,31 @@ function AdminDashboard() {
         <button onClick={handleLogout} className="logout-btn">Logout</button>
       </div>
 
-      <div className="admin-tabs">
-        <button 
-          className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
-        >
-          Overview
-        </button>
-        <button 
-          className={`tab ${activeTab === 'cctv' ? 'active' : ''}`}
-          onClick={() => setActiveTab('cctv')}
-        >
-          Monitoring
-        </button>
-        <button 
-          className={`tab ${activeTab === 'alerts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('alerts')}
-        >
-          Alerts
-        </button>
-      </div>
+      <div className="admin-layout">
+        <aside className="admin-sidebar">
+          <div className="sidebar-title">Admin Menu</div>
+          <button
+            className={`sidebar-button ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button
+            className={`sidebar-button ${activeTab === 'cctv' ? 'active' : ''}`}
+            onClick={() => setActiveTab('cctv')}
+          >
+            Monitoring
+          </button>
+          <button
+            className={`sidebar-button ${activeTab === 'alerts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('alerts')}
+          >
+            Alerts
+          </button>
+        </aside>
 
-      {activeTab === 'overview' && stats && (
+        <div className="admin-main-content">
+          {activeTab === 'overview' && stats && (
         <div className="admin-content">
           <div className="stats-grid">
             <div className="card-minimal">
@@ -358,7 +316,8 @@ function AdminDashboard() {
           </div>
         </div>
       )}
-
+    </div>
+  </div>
       {selectedCamera && (
         <div className="camera-modal-overlay" onClick={() => setSelectedCamera(null)}>
           <div className="camera-modal" onClick={(e) => e.stopPropagation()}>

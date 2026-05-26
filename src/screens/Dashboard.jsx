@@ -1,20 +1,44 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import './Dashboard.css'
 import ParkingSpot from '../components/ParkingSpot'
 import VehicleTracker from '../components/VehicleTracker'
 import TrafficChart from '../components/TrafficChart'
 
+const API_BASE_URL = 'http://localhost:3001'
+
 function Dashboard() {
   const [totalSpots] = useState(12)
-  const [occupiedSpots, setOccupiedSpots] = useState([1, 3, 4, 5, 7, 8])
-  const [occupancyPercentage, setOccupancyPercentage] = useState(50)
-  const [loading] = useState(false)
+  const [occupiedSpots, setOccupiedSpots] = useState([])
+  const [occupancyPercentage, setOccupancyPercentage] = useState(0)
+  const [loading, setLoading] = useState(true)
 
+  const fetchParkingLot = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/parking-lot`)
+      if (!response.ok) {
+        throw new Error('Unable to fetch parking lot status')
+      }
+      const data = await response.json()
+      setOccupiedSpots(data.occupiedSpots)
+      setOccupancyPercentage(data.occupancyPercentage)
+      setLoading(false)
+    } catch (error) {
+      console.error('Failed to load parking lot:', error)
+      setLoading(false)
+    }
+  }, [])
 
   const toggleSpot = useCallback(async (spotNumber) => {
+    const spotLabel = `A${spotNumber + 1}`
+    const currentlyOccupied = occupiedSpots.includes(spotNumber)
+
+    if (!window.confirm(`Confirm ${currentlyOccupied ? 'freeing' : 'occupying'} spot ${spotLabel}?`)) {
+      return
+    }
+
     try {
       const response = await fetch(
-        `http://localhost:3001/api/parking-lot/toggle/${spotNumber}`,
+        `${API_BASE_URL}/api/parking-lot/toggle/${spotNumber}`,
         { method: 'POST' }
       )
       const data = await response.json()
@@ -22,8 +46,15 @@ function Dashboard() {
       setOccupancyPercentage(Math.round((data.occupiedSpots.length / totalSpots) * 100))
     } catch (error) {
       console.error('Failed to toggle spot:', error)
+      window.alert('Unable to update spot status. Please try again.')
     }
-  }, [totalSpots])
+  }, [totalSpots, occupiedSpots])
+
+  useEffect(() => {
+    fetchParkingLot()
+    const interval = setInterval(fetchParkingLot, 5000)
+    return () => clearInterval(interval)
+  }, [fetchParkingLot])
 
   const parkingSpots = useMemo(() => {
     return Array.from({ length: totalSpots }, (_, i) => ({

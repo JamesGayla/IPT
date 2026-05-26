@@ -211,34 +211,55 @@
   font-weight: 600;
 }
 
-.admin-tabs {
+.admin-layout {
   display: flex;
-  gap: 8px;
+  gap: 24px;
   margin-bottom: 30px;
-  border-bottom: 2px solid var(--border-color);
 }
 
-.tab {
-  padding: 14px 24px;
+.admin-sidebar {
+  min-width: 180px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-title {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sidebar-button {
+  padding: 14px 16px;
   border: none;
   background: transparent;
-  cursor: pointer;
-  font-weight: 500;
   color: var(--text-secondary);
-  border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
+  text-align: left;
+  border-radius: 12px;
+  cursor: pointer;
   transition: all 0.2s ease;
   font-size: 14px;
 }
 
-.tab:hover {
-  color: var(--primary-color);
+.sidebar-button:hover {
+  background: rgba(56, 189, 248, 0.08);
+  color: var(--text-primary);
 }
 
-.tab.active {
-  color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
+.sidebar-button.active {
+  background: var(--primary-color);
+  color: white;
   font-weight: 600;
+}
+
+.admin-main-content {
+  flex: 1;
 }
 
 .admin-content {

@@ -42,6 +42,10 @@ class ToggleSpotResponse(BaseModel):
     isOccupied: bool
     occupiedSpots: List[int]
 
+class OccupancyUpdate(BaseModel):
+    occupancyDetected: bool
+    confidence: int = 0
+
 class AlertBase(BaseModel):
     type: str
     message: str
@@ -206,6 +210,74 @@ async def toggle_parking_spot(spot_number: int):
             "action": "TOGGLE_SPOT",
             "timestamp": datetime.now(),
             "details": f"Spot {spot_number} toggled to {'occupied' if is_occupied else 'available'}"
+        })
+
+    return {
+        "spotNumber": spot_number,
+        "isOccupied": is_occupied,
+        "occupiedSpots": parking_lot["occupiedSpots"]
+    }
+
+@app.post("/api/parking-lot/occupancy/{spot_number}", response_model=ToggleSpotResponse)
+async def update_parking_occupancy(spot_number: int, occupancy: OccupancyUpdate):
+    if spot_number < 0 or spot_number >= parking_lot["totalSpots"]:
+        raise HTTPException(status_code=400, detail="Invalid spot number")
+
+    if occupancy.occupancyDetected:
+        if spot_number not in parking_lot["occupiedSpots"]:
+            parking_lot["occupiedSpots"].append(spot_number)
+        is_occupied = True
+    else:
+        if spot_number in parking_lot["occupiedSpots"]:
+            parking_lot["occupiedSpots"].remove(spot_number)
+        is_occupied = False
+
+    camera = next((c for c in cctv_camera_data if c["spotNumber"] == spot_number), None)
+    if camera:
+        camera["occupancyDetected"] = occupancy.occupancyDetected
+        camera["confidence"] = occupancy.confidence
+        camera["lastUpdate"] = datetime.now()
+    else:
+        cctv_camera_data.append({
+            "spotNumber": spot_number,
+            "status": "active",
+            "occupancyDetected": occupancy.occupancyDetected,
+            "confidence": occupancy.confidence,
+            "lastUpdate": datetime.now()
+        })
+
+    return {
+        "spotNumber": spot_number,
+        "isOccupied": is_occupied,
+        "occupiedSpots": parking_lot["occupiedSpots"]
+    }
+
+@app.post("/api/parking-lot/occupancy/{spot_number}", response_model=ToggleSpotResponse)
+async def update_parking_occupancy(spot_number: int, occupancy: OccupancyUpdate):
+    if spot_number < 0 or spot_number >= parking_lot["totalSpots"]:
+        raise HTTPException(status_code=400, detail="Invalid spot number")
+
+    if occupancy.occupancyDetected:
+        if spot_number not in parking_lot["occupiedSpots"]:
+            parking_lot["occupiedSpots"].append(spot_number)
+        is_occupied = True
+    else:
+        if spot_number in parking_lot["occupiedSpots"]:
+            parking_lot["occupiedSpots"].remove(spot_number)
+        is_occupied = False
+
+    camera = next((c for c in cctv_camera_data if c["spotNumber"] == spot_number), None)
+    if camera:
+        camera["occupancyDetected"] = occupancy.occupancyDetected
+        camera["confidence"] = occupancy.confidence
+        camera["lastUpdate"] = datetime.now()
+    else:
+        cctv_camera_data.append({
+            "spotNumber": spot_number,
+            "status": "active",
+            "occupancyDetected": occupancy.occupancyDetected,
+            "confidence": occupancy.confidence,
+            "lastUpdate": datetime.now()
         })
 
     return {
