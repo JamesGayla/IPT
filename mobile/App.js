@@ -270,17 +270,6 @@ function StatusScreen() {
     [setParkingData],
   )
 
-<<<<<<< HEAD
-  const confirmToggleSpot = useCallback(
-    (spotNumber, currentlyOccupied) => {
-      Alert.alert(
-        'Confirm parking update',
-        `Mark spot A${spotNumber + 1} as ${currentlyOccupied ? 'empty' : 'occupied'}?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Confirm', onPress: () => toggleSpot(spotNumber) }
-        ]
-=======
   const handleSpotPress = useCallback(
     (spot) => {
       Alert.alert(
@@ -292,8 +281,7 @@ function StatusScreen() {
             text: spot.occupied ? 'Mark Available' : 'Mark Occupied',
             onPress: () => toggleSpot(spot.id),
           },
-        ],
->>>>>>> fdc0841c15714d2b8128e1e6379886374638ea3e
+        ]
       )
     },
     [toggleSpot],
@@ -350,16 +338,8 @@ function StatusScreen() {
         {spots.map((spot) => (
           <Pressable
             key={spot.id}
-<<<<<<< HEAD
-            onPress={() => confirmToggleSpot(spot.id, spot.occupied)}
-            style={[
-              styles.tableRow,
-              spot.occupied ? styles.spotOccupiedRow : styles.spotAvailableRow,
-            ]}
-=======
             onPress={() => handleSpotPress(spot)}
             style={[styles.spotBtn, spot.occupied ? styles.spotOccupied : styles.spotAvailable]}
->>>>>>> fdc0841c15714d2b8128e1e6379886374638ea3e
           >
             <Text style={styles.tableCell}>A{spot.id + 1}</Text>
             <Text style={styles.tableCell}>{spot.occupied ? 'Occupied' : 'Empty'}</Text>
@@ -383,20 +363,20 @@ function StatusScreen() {
 
 function AnalyticsScreen() {
   const stats = {
-    totalSpots: 12,
-    occupiedSpots: 7,
-    availableSpots: 5,
-    occupancyPercent: 58,
-    totalCameras: 12,
-    camerasOnline: 11,
+    totalSpots: 8,
+    occupiedSpots: 5,
+    availableSpots: 3,
+    occupancyPercent: 63,
+    totalCameras: 8,
+    camerasOnline: 7,
     openAlerts: 2,
   }
 
   const floorOccupancy = [
-    { floor: 1, occupied: 5, total: 12 },
-    { floor: 2, occupied: 2, total: 12 },
-    { floor: 3, occupied: 7, total: 12 },
-    { floor: 4, occupied: 3, total: 12 },
+    { floor: 1, occupied: 5, total: 8 },
+    { floor: 2, occupied: 2, total: 8 },
+    { floor: 3, occupied: 7, total: 8 },
+    { floor: 4, occupied: 3, total: 8 },
   ]
 
   return (
@@ -459,12 +439,12 @@ function AdminScreen() {
 
   const stats = useMemo(
     () => ({
-      totalSpots: 12,
+      totalSpots: 8,
       occupiedSpots: 6,
-      availableSpots: 6,
-      occupancyPercentage: 50,
+      availableSpots: 2,
+      occupancyPercentage: 75,
       totalAlerts: 2,
-      cameraCount: 12,
+      cameraCount: 8,
     }),
     [],
   )
@@ -602,7 +582,7 @@ function AdminScreen() {
           </View>
           <CameraViewer floor={selectedFloor} />
           <View style={styles.grid}>
-            {Array.from({ length: 12 }, (_, i) => {
+            {Array.from({ length: 8 }, (_, i) => {
               const occupied = occupancyMap[selectedFloor]?.includes(i)
               return (
                 <View

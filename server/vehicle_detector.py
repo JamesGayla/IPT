@@ -25,11 +25,7 @@ DEFAULT_SLOTS = [
     (50, 320, 220, 160),   # spot 4
     (300, 320, 220, 160),  # spot 5
     (550, 320, 220, 160),  # spot 6
-    (800, 320, 220, 160),  # spot 7
-    (50, 520, 220, 160),   # spot 8
-    (300, 520, 220, 160),  # spot 9
-    (550, 520, 220, 160),  # spot 10
-    (800, 520, 220, 160)   # spot 11
+    (800, 320, 220, 160)   # spot 7
 ]
 
 
@@ -111,6 +107,9 @@ def mjpeg_frame_generator(url, timeout=5, reconnect_delay=2):
 
 
 def open_video_source(camera_source, use_video_file, reconnect_delay=2):
+    if isinstance(camera_source, str) and camera_source.isdigit() and not use_video_file:
+        camera_source = int(camera_source)
+
     if is_http_source(camera_source) and not use_video_file:
         cap = cv2.VideoCapture(camera_source)
         if cap.isOpened():
@@ -131,7 +130,7 @@ def main(camera_source, backend_url, use_video_file):
     back_sub = cv2.createBackgroundSubtractorMOG2(history=120, detectShadows=True)
     slots = [ParkingSlot(i, roi) for i, roi in enumerate(DEFAULT_SLOTS)]
 
-    print("Starting vehicle motion detector. Press 'q' to quit.")
+    print("Starting vehicle detector. Press 'q' to quit.")
 
     while True:
         if cap is not None:
@@ -191,7 +190,7 @@ def main(camera_source, backend_url, use_video_file):
 
             draw_slot_overlay(frame, slot, motion_detected)
 
-        cv2.putText(frame, "OpenCV Parking Detector", (18, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2)
+        cv2.putText(frame, "Parking Slot Detector", (18, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2)
         cv2.imshow("Parking Slot Detector", frame)
 
         if cv2.waitKey(30) & 0xFF == ord('q'):
@@ -200,15 +199,20 @@ def main(camera_source, backend_url, use_video_file):
         if use_video_file and cap.get(cv2.CAP_PROP_POS_FRAMES) >= cap.get(cv2.CAP_PROP_FRAME_COUNT):
             break
 
-    cap.release()
+    if cap is not None:
+        cap.release()
     cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='OpenCV motion detector for parking slot occupancy.')
-    parser.add_argument('--source', default=0, help='Camera index or video file path')
+    parser = argparse.ArgumentParser(description='Vehicle detector for parking slot occupancy.')
+    parser.add_argument('--source', default=0, help='Camera index, video file path, or stream URL')
     parser.add_argument('--backend-url', default='http://localhost:3001', help='Backend API base URL')
     parser.add_argument('--video-file', action='store_true', help='Use source as a video file instead of camera index')
     args = parser.parse_args()
 
-    main(args.source, args.backend_url, args.video_file)
+    main(
+        args.source,
+        args.backend_url,
+        args.video_file,
+    )

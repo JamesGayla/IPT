@@ -8,8 +8,8 @@ app.use(cors());
 app.use(express.json());
 
 let parkingLot = {
-  totalSpots: 12,
-  occupiedSpots: [0, 2, 3, 5, 7, 9]
+  totalSpots: 8,
+  occupiedSpots: [0, 2, 3, 5]
 };
 
 let users = [
@@ -34,7 +34,9 @@ let cctvCameraData = [
   { spotNumber: 2, status: 'active', occupancyDetected: true, confidence: 95, lastUpdate: new Date() },
   { spotNumber: 3, status: 'active', occupancyDetected: false, confidence: 99, lastUpdate: new Date() },
   { spotNumber: 4, status: 'active', occupancyDetected: false, confidence: 96, lastUpdate: new Date() },
-  { spotNumber: 5, status: 'active', occupancyDetected: true, confidence: 94, lastUpdate: new Date() }
+  { spotNumber: 5, status: 'active', occupancyDetected: true, confidence: 94, lastUpdate: new Date() },
+  { spotNumber: 6, status: 'active', occupancyDetected: false, confidence: 91, lastUpdate: new Date() },
+  { spotNumber: 7, status: 'active', occupancyDetected: true, confidence: 92, lastUpdate: new Date() }
 ];
 
 let currentUserSession = null;
@@ -124,6 +126,45 @@ app.post('/api/parking-lot/toggle/:spotNumber', (req, res) => {
     });
   }
   
+  res.json({
+    spotNumber,
+    isOccupied: parkingLot.occupiedSpots.includes(spotNumber),
+    occupiedSpots: parkingLot.occupiedSpots
+  });
+});
+
+app.post('/api/parking-lot/occupancy/:spotNumber', (req, res) => {
+  const spotNumber = parseInt(req.params.spotNumber);
+  const { occupancyDetected, confidence } = req.body;
+
+  if (spotNumber < 0 || spotNumber >= parkingLot.totalSpots) {
+    return res.status(400).json({ error: 'Invalid spot number' });
+  }
+
+  if (occupancyDetected) {
+    if (!parkingLot.occupiedSpots.includes(spotNumber)) {
+      parkingLot.occupiedSpots.push(spotNumber);
+    }
+  } else {
+    parkingLot.occupiedSpots = parkingLot.occupiedSpots.filter((s) => s !== spotNumber);
+  }
+
+  let camera = cctvCameraData.find((c) => c.spotNumber === spotNumber);
+  if (camera) {
+    camera.occupancyDetected = occupancyDetected;
+    camera.confidence = confidence !== undefined ? confidence : camera.confidence;
+    camera.lastUpdate = new Date();
+  } else {
+    camera = {
+      spotNumber,
+      status: 'active',
+      occupancyDetected: occupancyDetected || false,
+      confidence: confidence || 0,
+      lastUpdate: new Date()
+    };
+    cctvCameraData.push(camera);
+  }
+
   res.json({
     spotNumber,
     isOccupied: parkingLot.occupiedSpots.includes(spotNumber),

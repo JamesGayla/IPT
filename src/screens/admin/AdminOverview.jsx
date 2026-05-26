@@ -5,9 +5,9 @@ const API_BASE_URL = 'http://localhost:3001'
 
 export default function AdminOverview() {
   const [stats, setStats] = useState({
-    totalSpots: 12,
+    totalSpots: 8,
     occupiedSpots: 0,
-    availableSpots: 12,
+    availableSpots: 8,
     occupancyPercentage: 0,
     totalAlerts: 0,
     cameraCount: 0

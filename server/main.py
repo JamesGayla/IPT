@@ -97,17 +97,15 @@ class StatsResponse(BaseModel):
 
 # In-memory data storage (in production, use a database)
 parking_lot = {
-    "totalSpots": 12,
-    "occupiedSpots": [0, 2, 3, 5, 7, 9]
+    "totalSpots": 8,
+    "occupiedSpots": [0, 2, 3, 5]
 }
 
 spot_metadata = {
     0: {"driverName": "Maria Cruz", "plateNumber": "ABC-1234", "vehicleType": "Sedan", "isParked": True},
     2: {"driverName": "John Dela Cruz", "plateNumber": "XYZ-5678", "vehicleType": "SUV", "isParked": True},
     3: {"driverName": "June Santos", "plateNumber": "PQR-9012", "vehicleType": "Motorbike", "isParked": True},
-    5: {"driverName": "Mark Reyes", "plateNumber": "LMN-3456", "vehicleType": "Pickup", "isParked": True},
-    7: {"driverName": "Anna Velasquez", "plateNumber": "GHI-7890", "vehicleType": "Sedan", "isParked": True},
-    9: {"driverName": "Carl Ramos", "plateNumber": "JKL-2345", "vehicleType": "Van", "isParked": True}
+    5: {"driverName": "Mark Reyes", "plateNumber": "LMN-3456", "vehicleType": "Pickup", "isParked": True}
 }
 
 users = [
@@ -132,7 +130,9 @@ cctv_camera_data = [
     {"spotNumber": 2, "status": "active", "occupancyDetected": True, "confidence": 95, "lastUpdate": datetime.now()},
     {"spotNumber": 3, "status": "active", "occupancyDetected": False, "confidence": 99, "lastUpdate": datetime.now()},
     {"spotNumber": 4, "status": "active", "occupancyDetected": False, "confidence": 96, "lastUpdate": datetime.now()},
-    {"spotNumber": 5, "status": "active", "occupancyDetected": True, "confidence": 94, "lastUpdate": datetime.now()}
+    {"spotNumber": 5, "status": "active", "occupancyDetected": True, "confidence": 94, "lastUpdate": datetime.now()},
+    {"spotNumber": 6, "status": "active", "occupancyDetected": False, "confidence": 91, "lastUpdate": datetime.now()},
+    {"spotNumber": 7, "status": "active", "occupancyDetected": True, "confidence": 92, "lastUpdate": datetime.now()}
 ]
 
 current_user_session = None
@@ -263,40 +263,6 @@ async def toggle_parking_spot(spot_number: int):
             "action": "TOGGLE_SPOT",
             "timestamp": datetime.now(),
             "details": f"Spot {spot_number} toggled to {'occupied' if is_occupied else 'available'}"
-        })
-
-    return {
-        "spotNumber": spot_number,
-        "isOccupied": is_occupied,
-        "occupiedSpots": parking_lot["occupiedSpots"]
-    }
-
-@app.post("/api/parking-lot/occupancy/{spot_number}", response_model=ToggleSpotResponse)
-async def update_parking_occupancy(spot_number: int, occupancy: OccupancyUpdate):
-    if spot_number < 0 or spot_number >= parking_lot["totalSpots"]:
-        raise HTTPException(status_code=400, detail="Invalid spot number")
-
-    if occupancy.occupancyDetected:
-        if spot_number not in parking_lot["occupiedSpots"]:
-            parking_lot["occupiedSpots"].append(spot_number)
-        is_occupied = True
-    else:
-        if spot_number in parking_lot["occupiedSpots"]:
-            parking_lot["occupiedSpots"].remove(spot_number)
-        is_occupied = False
-
-    camera = next((c for c in cctv_camera_data if c["spotNumber"] == spot_number), None)
-    if camera:
-        camera["occupancyDetected"] = occupancy.occupancyDetected
-        camera["confidence"] = occupancy.confidence
-        camera["lastUpdate"] = datetime.now()
-    else:
-        cctv_camera_data.append({
-            "spotNumber": spot_number,
-            "status": "active",
-            "occupancyDetected": occupancy.occupancyDetected,
-            "confidence": occupancy.confidence,
-            "lastUpdate": datetime.now()
         })
 
     return {

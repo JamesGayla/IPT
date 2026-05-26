@@ -6,20 +6,17 @@ const API_BASE_URL = 'http://localhost:3001'
 const LIVE_CAMERA_URL = 'http://127.0.0.1:4747/video'
 const DEFAULT_ALERT_TIMESTAMP = new Date(Date.now() - 60000)
 const INITIAL_OCCUPANCY_MAP = {
-  1: [0, 2, 4, 7, 9],
-  2: [1, 3, 5, 8, 10],
-  3: [0, 3, 6, 9, 11],
-  4: [1, 4, 7]
+  1: [0, 2, 4, 7]
 }
 
 function AdminDashboard() {
   const [stats, setStats] = useState({
-    totalSpots: 12,
+    totalSpots: 8,
     occupiedSpots: INITIAL_OCCUPANCY_MAP[1].length,
-    availableSpots: 12 - INITIAL_OCCUPANCY_MAP[1].length,
-    occupancyPercentage: Math.round((INITIAL_OCCUPANCY_MAP[1].length / 12) * 100),
+    availableSpots: 8 - INITIAL_OCCUPANCY_MAP[1].length,
+    occupancyPercentage: Math.round((INITIAL_OCCUPANCY_MAP[1].length / 8) * 100),
     totalAlerts: 2,
-    cameraCount: 12
+    cameraCount: 8
   })
   const [cctvCameras, setCctvCameras] = useState([
     { spotNumber: 0, status: 'active', occupancyDetected: true, confidence: 98, lastUpdate: new Date() },
@@ -29,11 +26,7 @@ function AdminDashboard() {
     { spotNumber: 4, status: 'active', occupancyDetected: false, confidence: 96, lastUpdate: new Date() },
     { spotNumber: 5, status: 'active', occupancyDetected: true, confidence: 94, lastUpdate: new Date() },
     { spotNumber: 6, status: 'active', occupancyDetected: false, confidence: 98, lastUpdate: new Date() },
-    { spotNumber: 7, status: 'active', occupancyDetected: true, confidence: 92, lastUpdate: new Date() },
-    { spotNumber: 8, status: 'active', occupancyDetected: false, confidence: 95, lastUpdate: new Date() },
-    { spotNumber: 9, status: 'active', occupancyDetected: true, confidence: 97, lastUpdate: new Date() },
-    { spotNumber: 10, status: 'active', occupancyDetected: false, confidence: 96, lastUpdate: new Date() },
-    { spotNumber: 11, status: 'active', occupancyDetected: true, confidence: 99, lastUpdate: new Date() }
+    { spotNumber: 7, status: 'active', occupancyDetected: true, confidence: 92, lastUpdate: new Date() }
   ])
   const [occupiedSpots, setOccupiedSpots] = useState(INITIAL_OCCUPANCY_MAP[1])
   const [alerts, setAlerts] = useState([
@@ -43,18 +36,8 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(false)
   const [selectedCamera, setSelectedCamera] = useState(null)
-  const [selectedFloor, setSelectedFloor] = useState(1)
-<<<<<<< HEAD
-
-  const calculateStats = useCallback((occupiedSpots) => {
-    const occupied = occupiedSpots.length
-=======
   const [selectedSpotInfo, setSelectedSpotInfo] = useState(null)
   const [spotModalOpen, setSpotModalOpen] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [loginError, setLoginError] = useState('')
 
   const spotDetailsMap = useMemo(() => ({
     1: {
@@ -85,10 +68,9 @@ function AdminDashboard() {
     }
   }), [])
 
-  const calculateStats = useCallback((map, floor) => {
-    const occupiedSpots = (map[floor] || []).length
->>>>>>> fdc0841c15714d2b8128e1e6379886374638ea3e
-    const totalSpots = 12
+  const calculateStats = useCallback((occupiedSpots) => {
+    const occupied = occupiedSpots.length
+    const totalSpots = 8
 
     return {
       totalSpots,
@@ -148,7 +130,7 @@ function AdminDashboard() {
     }
 
     const timer = setTimeout(startRefresh, 100)
-    const interval = setInterval(fetchAll, 15000)
+    const interval = setInterval(fetchAll, 3000)
 
     return () => {
       clearTimeout(timer)
@@ -162,7 +144,7 @@ function AdminDashboard() {
 
   const toggleSpotOccupancy = useCallback(async (floor, spotIndex) => {
     const spotLabel = `A${spotIndex + 1}`
-    const currentlyOccupied = occupiedSpots.includes(spotIndex)
+    const currentlyOccupied = getFloorOccupancy(spotIndex)
 
     if (!window.confirm(`Confirm ${currentlyOccupied ? 'freeing' : 'occupying'} spot ${spotLabel}?`)) {
       return
@@ -180,6 +162,10 @@ function AdminDashboard() {
 
       const data = await response.json()
       setOccupiedSpots(data.occupiedSpots)
+      setCctvCameras(prev => prev.map(cam => cam.spotNumber === spotIndex ? {
+        ...cam,
+        occupancyDetected: !currentlyOccupied
+      } : cam))
       setStats(prevStats => ({
         ...prevStats,
         ...calculateStats(data.occupiedSpots)
@@ -190,31 +176,28 @@ function AdminDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [calculateStats, occupiedSpots])
+  }, [calculateStats, occupiedSpots, getFloorOccupancy])
 
-  const getFloorOccupancy = useCallback((floor, spotIndex) => {
+  const getFloorOccupancy = useCallback((spotIndex) => {
+    const camera = cctvCameras.find(cam => cam.spotNumber === spotIndex)
+    if (camera) {
+      return camera.occupancyDetected
+    }
     return occupiedSpots.includes(spotIndex)
-  }, [occupiedSpots])
+  }, [occupiedSpots, cctvCameras])
 
-  const openSpotDetails = useCallback((floor, spotIndex) => {
-    const isOccupied = getFloorOccupancy(floor, spotIndex)
-    const metadata = spotDetailsMap[floor]?.[spotIndex] || {}
+  const openSpotDetails = useCallback((spotIndex) => {
+    const isOccupied = getFloorOccupancy(spotIndex)
+    const metadata = spotDetailsMap[1]?.[spotIndex] || {}
 
     setSelectedSpotInfo({
-      floor,
+      floor: 1,
       spotNumber: spotIndex,
       isOccupied,
       ...metadata
     })
     setSpotModalOpen(true)
   }, [getFloorOccupancy, spotDetailsMap])
-
-  const floorCameraUrlMap = useMemo(() => ({
-    1: LIVE_CAMERA_URL,
-    2: LIVE_CAMERA_URL,
-    3: LIVE_CAMERA_URL,
-    4: LIVE_CAMERA_URL
-  }), [])
 
   if (loading) {
     return <div className="admin-dashboard"><p>Loading...</p></div>
@@ -286,22 +269,11 @@ function AdminDashboard() {
         <div className="admin-content">
           <h3>CCTV Camera Network</h3>
           <div style={{ marginBottom: '20px' }}>
-            <CameraPlayer initialUrl={floorCameraUrlMap[selectedFloor] || '/Mockup%20Camera.mp4'} />
+            <CameraPlayer initialUrl={LIVE_CAMERA_URL} />
           </div>
           
           <div className="floor-selector">
-            <p>Select Parking Floor:</p>
-            <div className="floor-buttons">
-              {[1, 2, 3, 4].map(floor => (
-                <button
-                  key={floor}
-                  className={`floor-btn ${selectedFloor === floor ? 'active' : ''}`}
-                  onClick={() => setSelectedFloor(floor)}
-                >
-                  Floor {floor}
-                </button>
-              ))}
-            </div>
+            <p>Floor 1 only — directly synced with the OpenCV camera feed.</p>
           </div>
 
           <div className="cctv-summary" style={{ marginBottom: '16px' }}>
@@ -316,28 +288,28 @@ function AdminDashboard() {
           </div>
 
           <div className="floor-dedicated-camera" style={{ marginBottom: '16px' }}>
-            <p>Active Floor {selectedFloor} Camera</p>
+            <p>Active Floor 1 Camera</p>
           </div>
 
           <div className="floor-view">
-            <h4>Floor {selectedFloor} - Slot Overview</h4>
-            <p className="muted-text">Click a spot to toggle occupancy for the selected floor.</p>
+            <h4>Floor 1 - Slot Overview</h4>
+            <p className="muted-text">Click a spot to toggle occupancy for Floor 1.</p>
             <div className="floor-map">
               <div className="floor-content">
-                <p>Floor {selectedFloor} Layout</p>
+                <p>Floor 1 Layout</p>
                 <div className="spot-grid-preview">
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const isOccupied = getFloorOccupancy(selectedFloor, i)
+                  {Array.from({ length: 8 }, (_, i) => {
+                    const isOccupied = getFloorOccupancy(i)
                     return (
                       <div
                         key={i}
                         className={`spot-preview ${isOccupied ? 'occupied' : 'empty'}`}
-                        onClick={() => openSpotDetails(selectedFloor, i)}
+                        onClick={() => openSpotDetails(i)}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
-                            openSpotDetails(selectedFloor, i)
+                            openSpotDetails(i)
                           }
                         }}
                       >
@@ -370,10 +342,8 @@ function AdminDashboard() {
           </div>
         </div>
       )}
-<<<<<<< HEAD
     </div>
   </div>
-=======
 
       {spotModalOpen && selectedSpotInfo && (
         <div className="camera-modal-overlay" onClick={() => setSpotModalOpen(false)}>
@@ -417,7 +387,6 @@ function AdminDashboard() {
         </div>
       )}
 
->>>>>>> fdc0841c15714d2b8128e1e6379886374638ea3e
       {selectedCamera && (
         <div className="camera-modal-overlay" onClick={() => setSelectedCamera(null)}>
           <div className="camera-modal" onClick={(e) => e.stopPropagation()}>
@@ -425,7 +394,7 @@ function AdminDashboard() {
             <h2>Floor {selectedCamera.floor} - Camera View</h2>
 
             <div style={{ marginTop: 12 }}>
-              <CameraPlayer initialUrl={floorCameraUrlMap[selectedCamera.floor] || '/Mockup%20Camera.mp4'} />
+              <CameraPlayer initialUrl={LIVE_CAMERA_URL} />
             </div>
 
             <button className="close-modal-btn" onClick={() => setSelectedCamera(null)}>Close</button>

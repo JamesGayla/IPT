@@ -32,14 +32,14 @@ ChartJS.register(
 function Analytics() {
   const [analyticsData] = useState({
     occupancyTrend: [
-      { time: '6:00', occupied: 2, total: 12 },
-      { time: '8:00', occupied: 8, total: 12 },
-      { time: '10:00', occupied: 10, total: 12 },
-      { time: '12:00', occupied: 12, total: 12 },
-      { time: '14:00', occupied: 11, total: 12 },
-      { time: '16:00', occupied: 9, total: 12 },
-      { time: '18:00', occupied: 7, total: 12 },
-      { time: '20:00', occupied: 4, total: 12 }
+      { time: '6:00', occupied: 2, total: 8 },
+      { time: '8:00', occupied: 6, total: 8 },
+      { time: '10:00', occupied: 7, total: 8 },
+      { time: '12:00', occupied: 8, total: 8 },
+      { time: '14:00', occupied: 7, total: 8 },
+      { time: '16:00', occupied: 6, total: 8 },
+      { time: '18:00', occupied: 5, total: 8 },
+      { time: '20:00', occupied: 3, total: 8 }
     ],
     vehicleTypes: [
       { type: 'Sedan', count: 45, percentage: 60 },

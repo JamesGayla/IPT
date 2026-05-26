@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { useState, useEffect, useCallback, useMemo } from 'react'
-=======
-import { useState, useCallback, useMemo, useEffect } from 'react'
->>>>>>> fdc0841c15714d2b8128e1e6379886374638ea3e
 import './Dashboard.css'
 import ParkingSpot from '../components/ParkingSpot'
 import VehicleTracker from '../components/VehicleTracker'
@@ -11,51 +7,32 @@ import TrafficChart from '../components/TrafficChart'
 const API_BASE_URL = 'http://localhost:3001'
 
 function Dashboard() {
-  const [totalSpots] = useState(12)
-<<<<<<< HEAD
+  const [totalSpots] = useState(8)
   const [occupiedSpots, setOccupiedSpots] = useState([])
+  const [cctvData, setCctvData] = useState([])
   const [occupancyPercentage, setOccupancyPercentage] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const fetchParkingLot = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/parking-lot`)
-      if (!response.ok) {
+      const [parkingRes, cctvRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/parking-lot`),
+        fetch(`${API_BASE_URL}/api/cctv`)
+      ])
+
+      if (!parkingRes.ok || !cctvRes.ok) {
         throw new Error('Unable to fetch parking lot status')
       }
-      const data = await response.json()
-      setOccupiedSpots(data.occupiedSpots)
-      setOccupancyPercentage(data.occupancyPercentage)
+
+      const [parkingData, cctvData] = await Promise.all([parkingRes.json(), cctvRes.json()])
+      setOccupiedSpots(parkingData.occupiedSpots)
+      setCctvData(cctvData)
+      setOccupancyPercentage(parkingData.occupancyPercentage)
       setLoading(false)
     } catch (error) {
       console.error('Failed to load parking lot:', error)
       setLoading(false)
     }
-=======
-  const [occupiedSpots, setOccupiedSpots] = useState([1, 3, 4, 5, 7, 8])
-  const [occupancyPercentage, setOccupancyPercentage] = useState(50)
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    const fetchParkingData = async () => {
-      setLoading(true)
-      try {
-        const response = await fetch('http://localhost:3001/api/parking-lot')
-        if (!response.ok) {
-          throw new Error('Unable to fetch parking data')
-        }
-        const data = await response.json()
-        setOccupiedSpots(data.occupiedSpots)
-        setOccupancyPercentage(data.occupancyPercentage)
-      } catch (error) {
-        console.error('Failed to load parking data:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchParkingData()
->>>>>>> fdc0841c15714d2b8128e1e6379886374638ea3e
   }, [])
 
   const toggleSpot = useCallback(async (spotNumber) => {
@@ -73,27 +50,37 @@ function Dashboard() {
       )
       const data = await response.json()
       setOccupiedSpots(data.occupiedSpots)
-      setOccupancyPercentage(Math.round((data.occupiedSpots.length / totalSpots) * 100))
+      setCctvData(prev => prev.map(cam => cam.spotNumber === spotNumber ? {
+        ...cam,
+        occupancyDetected: !currentlyOccupied
+      } : cam))
     } catch (error) {
       console.error('Failed to toggle spot:', error)
       window.alert('Unable to update spot status. Please try again.')
     }
-  }, [totalSpots, occupiedSpots])
+  }, [occupiedSpots])
 
   useEffect(() => {
     fetchParkingLot()
-    const interval = setInterval(fetchParkingLot, 5000)
+    const interval = setInterval(fetchParkingLot, 3000)
     return () => clearInterval(interval)
   }, [fetchParkingLot])
 
   const parkingSpots = useMemo(() => {
-    return Array.from({ length: totalSpots }, (_, i) => ({
-      spotNumber: i,
-      isOccupied: occupiedSpots.includes(i)
-    }))
-  }, [totalSpots, occupiedSpots])
+    return Array.from({ length: totalSpots }, (_, i) => {
+      const camera = cctvData.find(cam => cam.spotNumber === i)
+      const isOccupied = camera ? camera.occupancyDetected : occupiedSpots.includes(i)
+      return {
+        spotNumber: i,
+        isOccupied
+      }
+    })
+  }, [totalSpots, occupiedSpots, cctvData])
 
-  const availableSpots = useMemo(() => totalSpots - occupiedSpots.length, [totalSpots, occupiedSpots.length])
+  const cameraOccupiedCount = useMemo(() => cctvData.filter(cam => cam.occupancyDetected).length, [cctvData])
+  const occupiedCount = cctvData.length ? cameraOccupiedCount : occupiedSpots.length
+  const availableSpots = useMemo(() => totalSpots - occupiedCount, [totalSpots, occupiedCount])
+  const currentOccupancy = useMemo(() => Math.round((occupiedCount / totalSpots) * 100), [occupiedCount, totalSpots])
 
   if (loading) {
     return <section className="dashboard"><p>Loading parking lot data...</p></section>
@@ -111,7 +98,7 @@ function Dashboard() {
         </div>
         <div className="card-minimal">
           <h3>Occupied</h3>
-          <p className="bigstat">{occupiedSpots.length}</p>
+          <p className="bigstat">{occupiedCount}</p>
           <p className="minor-muted">In-use spots</p>
         </div>
         <div className="card-minimal">
@@ -121,7 +108,7 @@ function Dashboard() {
         </div>
         <div className="card-minimal">
           <h3>Occupancy</h3>
-          <p className="bigstat">{occupancyPercentage}%</p>
+          <p className="bigstat">{currentOccupancy}%</p>
           <p className="minor-muted">Heatmap at glance</p>
         </div>
       </div>
@@ -134,8 +121,8 @@ function Dashboard() {
         <div className="occupancy-card">
           <h3>Total Occupancy</h3>
           <div className="occupancy-display">
-            <p className="occupancy-number">{occupiedSpots.length}/{totalSpots}</p>
-            <p className="occupancy-percentage">{occupancyPercentage}%</p>
+            <p className="occupancy-number">{occupiedCount}/{totalSpots}</p>
+            <p className="occupancy-percentage">{currentOccupancy}%</p>
           </div>
         </div>
         <div className="occupancy-card">
