@@ -183,6 +183,43 @@ Default test users:
 - `GET /api/stats` - Get system statistics
 - `GET /api/health` - Health check
 
+## Presentation / Run Instructions (Quick)
+
+To run the project locally for your presentation (quick steps):
+
+1. Backend (Python, FastAPI)
+
+```bash
+# from project root
+.venv\Scripts\python.exe -m pip install -r server/requirements.txt
+.venv\Scripts\python.exe -m uvicorn server.main:app --reload --port 3001
+```
+
+Visit `http://localhost:3001/api/health` - should return `{ "status": "ok" }`.
+
+2. Frontend (Web)
+
+```bash
+# from project root
+npm install
+npm run build
+npm run preview
+```
+
+Open `http://localhost:4173/` to view the production preview of the web UI.
+
+Admin credentials for demo:
+- Username: `admin`
+- Password: `admin123`
+
+Behavior notes for the demo:
+- Admin view (`/admin`) can click any parking spot to open a details modal showing driver name, plate number, vehicle type and occupancy. Admin can toggle occupancy from the details modal.
+- Regular users can view parking occupancy (green = available, red = occupied) and tap spots on mobile to see availability; metadata is hidden for non-admins.
+
+Deployment notes:
+- A `render.yaml` manifest is included for deploying the backend to Render (Gunicorn + Uvicorn worker). Vercel route `vercel.json` is present for serverless deployment of the Python API if preferred.
+
+
 ## 📦 Vercel Deployment
 This repository now includes a Vercel deployment setup for the FastAPI backend.
 

@@ -47,10 +47,41 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(false)
   const [selectedCamera, setSelectedCamera] = useState(null)
   const [selectedFloor, setSelectedFloor] = useState(1)
+  const [selectedSpotInfo, setSelectedSpotInfo] = useState(null)
+  const [spotModalOpen, setSpotModalOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
+
+  const spotDetailsMap = useMemo(() => ({
+    1: {
+      0: { driverName: 'Maria Cruz', plateNumber: 'ABC-1234', vehicleType: 'Sedan' },
+      2: { driverName: 'John Dela Cruz', plateNumber: 'XYZ-5678', vehicleType: 'SUV' },
+      4: { driverName: 'June Santos', plateNumber: 'PQR-9012', vehicleType: 'Motorbike' },
+      7: { driverName: 'Mark Reyes', plateNumber: 'LMN-3456', vehicleType: 'Pickup' },
+      9: { driverName: 'Anna Velasquez', plateNumber: 'GHI-7890', vehicleType: 'Sedan' }
+    },
+    2: {
+      1: { driverName: 'Carl Ramos', plateNumber: 'JKL-2345', vehicleType: 'Van' },
+      3: { driverName: 'Nina Bautista', plateNumber: 'STU-5678', vehicleType: 'SUV' },
+      5: { driverName: 'Rico Morales', plateNumber: 'DEF-9012', vehicleType: 'Sedan' },
+      8: { driverName: 'Paula Cruz', plateNumber: 'HJK-6543', vehicleType: 'Hatchback' },
+      10: { driverName: 'Leo Santos', plateNumber: 'VWX-4321', vehicleType: 'Pickup' }
+    },
+    3: {
+      0: { driverName: 'Ana Lopez', plateNumber: 'ZXC-7890', vehicleType: 'Coupe' },
+      3: { driverName: 'Tom Reyes', plateNumber: 'QWE-1234', vehicleType: 'SUV' },
+      6: { driverName: 'Gina Fernandez', plateNumber: 'IOP-4567', vehicleType: 'Sedan' },
+      9: { driverName: 'Jake Torres', plateNumber: 'ASD-8901', vehicleType: 'Van' },
+      11: { driverName: 'Mia Antonio', plateNumber: 'FGH-2345', vehicleType: 'Pickup' }
+    },
+    4: {
+      1: { driverName: 'Erik Ramos', plateNumber: 'RTY-6789', vehicleType: 'Sedan' },
+      4: { driverName: 'Vera Dizon', plateNumber: 'UIO-1234', vehicleType: 'SUV' },
+      7: { driverName: 'Joel Navarro', plateNumber: 'PAS-5678', vehicleType: 'Cargo Van' }
+    }
+  }), [])
 
   const calculateStats = useCallback((map, floor) => {
     const occupiedSpots = (map[floor] || []).length
@@ -156,6 +187,19 @@ function AdminDashboard() {
   const getFloorOccupancy = useCallback((floor, spotIndex) => {
     return occupancyMap[floor]?.includes(spotIndex) || false
   }, [occupancyMap])
+
+  const openSpotDetails = useCallback((floor, spotIndex) => {
+    const isOccupied = getFloorOccupancy(floor, spotIndex)
+    const metadata = spotDetailsMap[floor]?.[spotIndex] || {}
+
+    setSelectedSpotInfo({
+      floor,
+      spotNumber: spotIndex,
+      isOccupied,
+      ...metadata
+    })
+    setSpotModalOpen(true)
+  }, [getFloorOccupancy, spotDetailsMap])
 
   const floorCameraUrlMap = useMemo(() => ({
     1: '/Mockup%20Camera.mp4',
@@ -320,12 +364,12 @@ function AdminDashboard() {
                       <div
                         key={i}
                         className={`spot-preview ${isOccupied ? 'occupied' : 'empty'}`}
-                        onClick={() => toggleSpotOccupancy(selectedFloor, i)}
+                        onClick={() => openSpotDetails(selectedFloor, i)}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
-                            toggleSpotOccupancy(selectedFloor, i)
+                            openSpotDetails(selectedFloor, i)
                           }
                         }}
                       >
@@ -355,6 +399,48 @@ function AdminDashboard() {
                 <span className="severity-badge">{alert.severity}</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {spotModalOpen && selectedSpotInfo && (
+        <div className="camera-modal-overlay" onClick={() => setSpotModalOpen(false)}>
+          <div className="camera-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="close-btn" onClick={() => setSpotModalOpen(false)}>×</button>
+            <h2>Spot A{selectedSpotInfo.spotNumber + 1} Details</h2>
+            <p>Floor {selectedSpotInfo.floor}</p>
+            <p>Status: <strong>{selectedSpotInfo.isOccupied ? 'Occupied' : 'Available'}</strong></p>
+
+            {selectedSpotInfo.isOccupied ? (
+              <div style={{ marginTop: 12 }}>
+                <p><strong>Driver Name:</strong> {selectedSpotInfo.driverName || 'Unknown'}</p>
+                <p><strong>Plate Number:</strong> {selectedSpotInfo.plateNumber || 'Unknown'}</p>
+                <p><strong>Vehicle Type:</strong> {selectedSpotInfo.vehicleType || 'Unknown'}</p>
+              </div>
+            ) : (
+              <div style={{ marginTop: 12 }}>
+                <p>This parking spot is currently available.</p>
+              </div>
+            )}
+
+            <button
+              className="close-modal-btn"
+              onClick={() => {
+                toggleSpotOccupancy(selectedSpotInfo.floor, selectedSpotInfo.spotNumber)
+                setSpotModalOpen(false)
+              }}
+            >
+              {selectedSpotInfo.isOccupied ? 'Free Spot' : 'Mark Occupied'}
+            </button>
+
+            <button
+              className="close-modal-btn"
+              onClick={() => {
+                setSpotModalOpen(false)
+              }}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

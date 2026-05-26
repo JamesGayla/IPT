@@ -72,6 +72,15 @@ class CCTVCameraUpdate(BaseModel):
     occupancyDetected: Optional[bool] = None
     confidence: Optional[int] = None
 
+class ParkingSpotDetailResponse(BaseModel):
+    spotNumber: int
+    isOccupied: bool
+    status: str
+    driverName: Optional[str] = None
+    plateNumber: Optional[str] = None
+    vehicleType: Optional[str] = None
+    message: Optional[str] = None
+
 class StatsResponse(BaseModel):
     totalSpots: int
     occupiedSpots: int
@@ -86,6 +95,15 @@ class StatsResponse(BaseModel):
 parking_lot = {
     "totalSpots": 12,
     "occupiedSpots": [0, 2, 3, 5, 7, 9]
+}
+
+spot_metadata = {
+    0: {"driverName": "Maria Cruz", "plateNumber": "ABC-1234", "vehicleType": "Sedan", "isParked": True},
+    2: {"driverName": "John Dela Cruz", "plateNumber": "XYZ-5678", "vehicleType": "SUV", "isParked": True},
+    3: {"driverName": "June Santos", "plateNumber": "PQR-9012", "vehicleType": "Motorbike", "isParked": True},
+    5: {"driverName": "Mark Reyes", "plateNumber": "LMN-3456", "vehicleType": "Pickup", "isParked": True},
+    7: {"driverName": "Anna Velasquez", "plateNumber": "GHI-7890", "vehicleType": "Sedan", "isParked": True},
+    9: {"driverName": "Carl Ramos", "plateNumber": "JKL-2345", "vehicleType": "Van", "isParked": True}
 }
 
 users = [
@@ -186,6 +204,33 @@ async def get_parking_lot():
         "occupancyPercentage": occupancy_percentage
     }
 
+@app.get("/api/parking-lot/spot/{spot_number}", response_model=ParkingSpotDetailResponse)
+async def get_parking_spot_details(spot_number: int):
+    if spot_number < 0 or spot_number >= parking_lot["totalSpots"]:
+        raise HTTPException(status_code=400, detail="Invalid spot number")
+
+    is_occupied = spot_number in parking_lot["occupiedSpots"]
+    metadata = spot_metadata.get(spot_number, {})
+    status = "Occupied" if is_occupied else "Available"
+
+    if current_user_session and current_user_session.get("role") == "admin":
+        return {
+            "spotNumber": spot_number,
+            "isOccupied": is_occupied,
+            "status": status,
+            "driverName": metadata.get("driverName"),
+            "plateNumber": metadata.get("plateNumber"),
+            "vehicleType": metadata.get("vehicleType"),
+            "message": "Admin-only parking spot details"
+        }
+
+    return {
+        "spotNumber": spot_number,
+        "isOccupied": is_occupied,
+        "status": status,
+        "message": "Spot occupancy status only."
+    }
+
 @app.post("/api/parking-lot/toggle/{spot_number}", response_model=ToggleSpotResponse)
 async def toggle_parking_spot(spot_number: int):
     if spot_number < 0 or spot_number >= parking_lot["totalSpots"]:
@@ -194,9 +239,17 @@ async def toggle_parking_spot(spot_number: int):
     if spot_number in parking_lot["occupiedSpots"]:
         parking_lot["occupiedSpots"].remove(spot_number)
         is_occupied = False
+        spot_metadata.setdefault(spot_number, {})["isParked"] = False
     else:
         parking_lot["occupiedSpots"].append(spot_number)
         is_occupied = True
+        spot_metadata.setdefault(spot_number, {
+            "driverName": "Guest Driver",
+            "plateNumber": "UNKNOWN",
+            "vehicleType": "Unknown",
+            "isParked": True
+        })
+        spot_metadata[spot_number]["isParked"] = True
 
     # Log activity
     if current_user_session:

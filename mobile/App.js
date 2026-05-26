@@ -271,6 +271,23 @@ function StatusScreen() {
     [setParkingData],
   )
 
+  const handleSpotPress = useCallback(
+    (spot) => {
+      Alert.alert(
+        `Spot A${spot.id + 1}`,
+        spot.occupied ? 'This spot is currently occupied.' : 'This spot is available.',
+        [
+          { text: 'Close', style: 'cancel' },
+          {
+            text: spot.occupied ? 'Mark Available' : 'Mark Occupied',
+            onPress: () => toggleSpot(spot.id),
+          },
+        ],
+      )
+    },
+    [toggleSpot],
+  )
+
   const spots = useMemo(() => {
     if (!parkingData) return []
     return Array.from({ length: parkingData.totalSpots }, (_, i) => ({
@@ -338,7 +355,7 @@ function StatusScreen() {
         {spots.map((spot) => (
           <Pressable
             key={spot.id}
-            onPress={() => toggleSpot(spot.id)}
+            onPress={() => handleSpotPress(spot)}
             style={[styles.spotBtn, spot.occupied ? styles.spotOccupied : styles.spotAvailable]}
           >
             <Text style={styles.spotText}>A{spot.id + 1}</Text>
