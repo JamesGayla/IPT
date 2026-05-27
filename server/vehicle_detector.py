@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import threading
 from stream_server import push_frame, create_app
+import os
 
 
 # Start streaming server in background thread
@@ -33,17 +34,59 @@ class ParkingSlot:
         self.no_motion_frames = 0
 
 
+class CarDetector:
+    """YOLO-based car detection for parking slots"""
+    def __init__(self, model_name='yolov8n.pt', device='cpu'):
+        print(f"Loading YOLO model: {model_name}...")
+        from ultralytics import YOLO
+        self.model = YOLO(model_name)
+        self.model.to(device)
+        self.device = device
+        self.car_class_id = 2  # COCO dataset: car class ID
+        print("YOLO model loaded successfully")
+    
+    def detect_car_in_roi(self, frame, slot, conf_threshold=0.45):
+        """
+        Detect cars in a parking slot ROI using YOLO
+        
+        Args:
+            frame: Full frame
+            slot: ParkingSlot object
+            conf_threshold: Confidence threshold for detection
+            
+        Returns:
+            (detected: bool, confidence: float)
+        """
+        x, y, w, h = slot.roi
+        roi = frame[y:y + h, x:x + w]
+        
+        if roi.size == 0:
+            return False, 0
+        
+        # Run YOLO inference on ROI
+        results = self.model(roi, verbose=False, conf=conf_threshold, device=self.device)
+        
+        max_confidence = 0
+        for result in results:
+            for box in result.boxes:
+                if int(box.cls) == self.car_class_id:
+                    confidence = float(box.conf)
+                    max_confidence = max(max_confidence, confidence)
+        
+        return max_confidence > 0, int(max_confidence * 100)
+
+
 DEFAULT_SLOTS = [
-    # Coordinates must be adapted to your camera angle.
+    # Coordinates in 2x4 grid layout (all fit within 800x600 frame)
     # Format: (x, y, width, height)
-    (50, 120, 220, 160),   # spot 0
-    (300, 120, 220, 160),  # spot 1
-    (550, 120, 220, 160),  # spot 2
-    (800, 120, 220, 160),  # spot 3
-    (50, 320, 220, 160),   # spot 4
-    (300, 320, 220, 160),  # spot 5
-    (550, 320, 220, 160),  # spot 6
-    (800, 320, 220, 160)   # spot 7
+    (20, 120, 180, 140),   # spot 0 (row 1, col 1)
+    (210, 120, 180, 140),  # spot 1 (row 1, col 2)
+    (400, 120, 180, 140),  # spot 2 (row 1, col 3)
+    (590, 120, 180, 140),  # spot 3 (row 1, col 4)
+    (20, 280, 180, 140),   # spot 4 (row 2, col 1)
+    (210, 280, 180, 140),  # spot 5 (row 2, col 2)
+    (400, 280, 180, 140),  # spot 6 (row 2, col 3)
+    (590, 280, 180, 140)   # spot 7 (row 2, col 4)
 ]
 
 
@@ -139,7 +182,7 @@ def open_video_source(camera_source, use_video_file, reconnect_delay=2):
     return cv2.VideoCapture(camera_source), None
 
 
-def main(camera_source, backend_url, use_video_file):
+def main(camera_source, backend_url, use_video_file, use_yolo=True):
     # Start streaming server for web display
     print("Starting MJPEG streaming server on http://127.0.0.1:4747/video...")
     start_streaming_server()
@@ -150,7 +193,24 @@ def main(camera_source, backend_url, use_video_file):
     if cap is None and stream_generator is None:
         raise RuntimeError("Could not open video source. Check the camera index, file path, or stream URL.")
 
-    back_sub = cv2.createBackgroundSubtractorMOG2(history=120, detectShadows=True)
+    # Initialize YOLO or MOG2 background subtraction
+    car_detector = None
+    back_sub = None
+    
+    if use_yolo:
+        try:
+            # Try to use GPU if available, fallback to CPU
+            device = 'cuda' if os.environ.get('CUDA_VISIBLE_DEVICES') else 'cpu'
+            car_detector = CarDetector(model_name='yolov8n.pt', device=device)
+            print("Using YOLO car detection")
+        except Exception as e:
+            print(f"Warning: YOLO initialization failed ({e}). Falling back to motion detection.")
+            car_detector = None
+            back_sub = cv2.createBackgroundSubtractorMOG2(history=120, detectShadows=True)
+    else:
+        back_sub = cv2.createBackgroundSubtractorMOG2(history=120, detectShadows=True)
+        print("Using motion detection (MOG2)")
+    
     slots = [ParkingSlot(i, roi) for i, roi in enumerate(DEFAULT_SLOTS)]
 
     print("Starting vehicle detector. Press 'q' to quit.")
@@ -194,16 +254,21 @@ def main(camera_source, backend_url, use_video_file):
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
 
         for slot in slots:
-            motion_detected, area = detect_motion_in_roi(gray, slot, back_sub)
+            # Use YOLO if available, otherwise fallback to motion detection
+            if car_detector is not None:
+                motion_detected, area = car_detector.detect_car_in_roi(frame, slot, conf_threshold=0.45)
+            else:
+                motion_detected, area = detect_motion_in_roi(gray, slot, back_sub)
 
             if motion_detected and not slot.occupied:
                 slot.motion_count += 1
             else:
                 slot.motion_count = 0
 
-            if slot.motion_count >= 5 and not slot.occupied:
+            if slot.motion_count >= 3 and not slot.occupied:  # YOLO is more accurate, fewer frames needed
                 slot.occupied = True
-                send_backend_update(backend_url, slot.spot_number, True, min(100, max(50, area // 10)))
+                confidence = area if car_detector is not None else min(100, max(50, area // 10))
+                send_backend_update(backend_url, slot.spot_number, True, confidence)
                 slot.no_motion_frames = 0
 
             if not motion_detected and slot.occupied:
@@ -211,14 +276,14 @@ def main(camera_source, backend_url, use_video_file):
             else:
                 slot.no_motion_frames = 0
 
-            if slot.no_motion_frames > 90 and slot.occupied:
+            if slot.no_motion_frames > 60 and slot.occupied:  # Fewer frames with YOLO
                 slot.occupied = False
                 send_backend_update(backend_url, slot.spot_number, False, 90)
                 slot.motion_count = 0
 
             draw_slot_overlay(frame, slot, motion_detected)
 
-        cv2.putText(frame, "Parking Slot Detector", (18, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2)
+        cv2.putText(frame, "Parking Slot Detector (YOLO)", (18, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2)
         
         # Push frame to streaming server for web display
         push_frame(frame)
@@ -242,14 +307,16 @@ def main(camera_source, backend_url, use_video_file):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Vehicle detector for parking slot occupancy.')
+    parser = argparse.ArgumentParser(description='Vehicle detector for parking slot occupancy using YOLO.')
     parser.add_argument('--source', default=0, help='Camera index, video file path, or stream URL')
     parser.add_argument('--backend-url', default='http://localhost:3001', help='Backend API base URL')
     parser.add_argument('--video-file', action='store_true', help='Use source as a video file instead of camera index')
+    parser.add_argument('--motion-only', action='store_true', help='Use motion detection instead of YOLO (fallback)')
     args = parser.parse_args()
 
     main(
         args.source,
         args.backend_url,
         args.video_file,
+        use_yolo=not args.motion_only,
     )

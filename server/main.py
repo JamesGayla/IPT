@@ -98,14 +98,18 @@ class StatsResponse(BaseModel):
 # In-memory data storage (in production, use a database)
 parking_lot = {
     "totalSpots": 8,
-    "occupiedSpots": [0, 2, 3, 5]
+    "occupiedSpots": []  # Empty - will be populated by detector
 }
 
 spot_metadata = {
-    0: {"driverName": "Maria Cruz", "plateNumber": "ABC-1234", "vehicleType": "Sedan", "isParked": True},
-    2: {"driverName": "John Dela Cruz", "plateNumber": "XYZ-5678", "vehicleType": "SUV", "isParked": True},
-    3: {"driverName": "June Santos", "plateNumber": "PQR-9012", "vehicleType": "Motorbike", "isParked": True},
-    5: {"driverName": "Mark Reyes", "plateNumber": "LMN-3456", "vehicleType": "Pickup", "isParked": True}
+    0: {"driverName": "", "plateNumber": "", "vehicleType": "", "isParked": False},
+    1: {"driverName": "", "plateNumber": "", "vehicleType": "", "isParked": False},
+    2: {"driverName": "", "plateNumber": "", "vehicleType": "", "isParked": False},
+    3: {"driverName": "", "plateNumber": "", "vehicleType": "", "isParked": False},
+    4: {"driverName": "", "plateNumber": "", "vehicleType": "", "isParked": False},
+    5: {"driverName": "", "plateNumber": "", "vehicleType": "", "isParked": False},
+    6: {"driverName": "", "plateNumber": "", "vehicleType": "", "isParked": False},
+    7: {"driverName": "", "plateNumber": "", "vehicleType": "", "isParked": False}
 }
 
 users = [
@@ -124,15 +128,16 @@ activity_history = [
     {"id": 3, "userId": 2, "action": "BOOK_SPACE", "timestamp": datetime.now(), "details": "User booked spot 5"}
 ]
 
+# Initialize CCTV camera data - will be populated by detector
 cctv_camera_data = [
-    {"spotNumber": 0, "status": "active", "occupancyDetected": True, "confidence": 98, "lastUpdate": datetime.now()},
-    {"spotNumber": 1, "status": "active", "occupancyDetected": False, "confidence": 97, "lastUpdate": datetime.now()},
-    {"spotNumber": 2, "status": "active", "occupancyDetected": True, "confidence": 95, "lastUpdate": datetime.now()},
-    {"spotNumber": 3, "status": "active", "occupancyDetected": False, "confidence": 99, "lastUpdate": datetime.now()},
-    {"spotNumber": 4, "status": "active", "occupancyDetected": False, "confidence": 96, "lastUpdate": datetime.now()},
-    {"spotNumber": 5, "status": "active", "occupancyDetected": True, "confidence": 94, "lastUpdate": datetime.now()},
-    {"spotNumber": 6, "status": "active", "occupancyDetected": False, "confidence": 91, "lastUpdate": datetime.now()},
-    {"spotNumber": 7, "status": "active", "occupancyDetected": True, "confidence": 92, "lastUpdate": datetime.now()}
+    {"spotNumber": 0, "status": "active", "occupancyDetected": False, "confidence": 0, "lastUpdate": datetime.now()},
+    {"spotNumber": 1, "status": "active", "occupancyDetected": False, "confidence": 0, "lastUpdate": datetime.now()},
+    {"spotNumber": 2, "status": "active", "occupancyDetected": False, "confidence": 0, "lastUpdate": datetime.now()},
+    {"spotNumber": 3, "status": "active", "occupancyDetected": False, "confidence": 0, "lastUpdate": datetime.now()},
+    {"spotNumber": 4, "status": "active", "occupancyDetected": False, "confidence": 0, "lastUpdate": datetime.now()},
+    {"spotNumber": 5, "status": "active", "occupancyDetected": False, "confidence": 0, "lastUpdate": datetime.now()},
+    {"spotNumber": 6, "status": "active", "occupancyDetected": False, "confidence": 0, "lastUpdate": datetime.now()},
+    {"spotNumber": 7, "status": "active", "occupancyDetected": False, "confidence": 0, "lastUpdate": datetime.now()}
 ]
 
 current_user_session = None

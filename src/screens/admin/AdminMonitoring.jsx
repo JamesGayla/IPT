@@ -17,8 +17,8 @@ export default function AdminMonitoring() {
     setSyncError(null)
     try {
       const [parkingRes, cctvRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/parking-lot`),
-        fetch(`${API_BASE_URL}/api/cctv`)
+        fetch(`${API_BASE_URL}/api/parking-lot?t=${Date.now()}`),
+        fetch(`${API_BASE_URL}/api/cctv?t=${Date.now()}`)
       ])
 
       if (!parkingRes.ok || !cctvRes.ok) {
@@ -27,6 +27,13 @@ export default function AdminMonitoring() {
 
       const parking = await parkingRes.json()
       const cctv = await cctvRes.json()
+      
+      // Log updates for debugging
+      console.log('📊 Parking Status Updated:', {
+        occupiedSpots: parking.occupiedSpots,
+        cctvCameras: cctv.map(c => ({ spot: c.spotNumber, occupied: c.occupancyDetected, confidence: c.confidence }))
+      })
+      
       setOccupiedSpots(parking.occupiedSpots)
       setCctvCameras(cctv)
       setLastSync(new Date())
@@ -41,8 +48,8 @@ export default function AdminMonitoring() {
 
   useEffect(() => {
     fetchStatus()
-    // Sync every 3 seconds as requested
-    const interval = setInterval(fetchStatus, 3000)
+    // Sync every 1 second for real-time updates as requested
+    const interval = setInterval(fetchStatus, 1000)
     return () => clearInterval(interval)
   }, [fetchStatus])
 
@@ -108,7 +115,7 @@ export default function AdminMonitoring() {
         <div>
           <strong>Real-time Sync Status</strong>
           <p style={{ margin: '4px 0', fontSize: '0.9em', color: 'var(--text-secondary)' }}>
-            Updates every 3 seconds from IP camera
+            Updates every 1 second from IP camera
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -146,8 +153,32 @@ export default function AdminMonitoring() {
       </div>
 
       <div className="floor-view">
-        <h4>Floor 1 - Parking Spot Status (Synced from IP Camera)</h4>
-        <p className="muted-text">Click a spot to manually toggle occupancy. Real-time camera detection updates every 3 seconds.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <div>
+            <h4 style={{ margin: '0' }}>Floor 1 - Parking Spot Status (Synced from IP Camera)</h4>
+            <p className="muted-text" style={{ margin: '4px 0 0 0' }}>Click a spot to manually toggle occupancy. Real-time camera detection updates every 1 second.</p>
+          </div>
+          <button
+            onClick={fetchStatus}
+            disabled={isSyncing}
+            style={{
+              padding: '8px 16px',
+              background: isSyncing ? '#d1d5db' : '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: isSyncing ? 'not-allowed' : 'pointer',
+              fontSize: '0.9em',
+              fontWeight: 'bold',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap',
+              marginLeft: '12px'
+            }}
+            title="Manually refresh parking spot status"
+          >
+            {isSyncing ? '🔄 Syncing...' : '🔄 Refresh'}
+          </button>
+        </div>
         
         <div style={{ marginBottom: '20px' }}>
           <div style={{
