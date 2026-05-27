@@ -3,6 +3,24 @@ import time
 import requests
 import cv2
 import numpy as np
+import threading
+from stream_server import push_frame, create_app
+
+
+# Start streaming server in background thread
+def start_streaming_server():
+    app = create_app()
+    server_thread = threading.Thread(
+        target=lambda: app.run(
+            host='127.0.0.1',
+            port=4747,
+            threaded=True,
+            debug=False,
+            use_reloader=False
+        ),
+        daemon=True
+    )
+    server_thread.start()
 
 
 class ParkingSlot:
@@ -122,6 +140,11 @@ def open_video_source(camera_source, use_video_file, reconnect_delay=2):
 
 
 def main(camera_source, backend_url, use_video_file):
+    # Start streaming server for web display
+    print("Starting MJPEG streaming server on http://127.0.0.1:4747/video...")
+    start_streaming_server()
+    time.sleep(1)  # Give server time to start
+    
     cap, stream_generator = open_video_source(camera_source, use_video_file)
 
     if cap is None and stream_generator is None:
@@ -131,6 +154,10 @@ def main(camera_source, backend_url, use_video_file):
     slots = [ParkingSlot(i, roi) for i, roi in enumerate(DEFAULT_SLOTS)]
 
     print("Starting vehicle detector. Press 'q' to quit.")
+    
+    # Frame timing for consistent FPS
+    last_frame_time = time.time()
+    target_fps = 15  # Reduce to 15 FPS for web streaming to reduce lag
 
     while True:
         if cap is not None:
@@ -161,7 +188,8 @@ def main(camera_source, backend_url, use_video_file):
             time.sleep(0.05)
             continue
 
-        frame = cv2.resize(frame, (1100, 720))
+        # Optimize frame size for web streaming (reduce from 1100x720 to 800x600 for better performance)
+        frame = cv2.resize(frame, (800, 600))
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
 
@@ -191,10 +219,19 @@ def main(camera_source, backend_url, use_video_file):
             draw_slot_overlay(frame, slot, motion_detected)
 
         cv2.putText(frame, "Parking Slot Detector", (18, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2)
+        
+        # Push frame to streaming server for web display
+        push_frame(frame)
+        
+        # Display locally only if needed (can be disabled in production)
         cv2.imshow("Parking Slot Detector", frame)
 
-        if cv2.waitKey(30) & 0xFF == ord('q'):
+        # Control frame rate: target FPS
+        elapsed = time.time() - last_frame_time
+        wait_time = int((1.0 / target_fps - elapsed) * 1000)
+        if cv2.waitKey(max(1, wait_time)) & 0xFF == ord('q'):
             break
+        last_frame_time = time.time()
 
         if use_video_file and cap.get(cv2.CAP_PROP_POS_FRAMES) >= cap.get(cv2.CAP_PROP_FRAME_COUNT):
             break

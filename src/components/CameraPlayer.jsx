@@ -12,12 +12,83 @@ export default function CameraPlayer({ initialUrl = LOCAL_VIDEO_PATH, hideContro
   const [playerState, setPlayerState] = useState('loading') // loading|playing|ended|error
   const [mediaError, setMediaError] = useState('')
   const videoRef = useRef(null)
+  const imgRef = useRef(null)
+  const reconnectTimeoutRef = useRef(null)
 
   useEffect(() => {
-    if (!useWebcam) {
+    if (!useWebcam && !isMjpegStream) {
       setCurrentUrl(`${externalUrl.split('?')[0]}?t=${Date.now()}`)
     }
-  }, [externalUrl, useWebcam])
+  }, [externalUrl, useWebcam, isMjpegStream])
+
+  // Handle MJPEG stream with proper continuous refresh
+  useEffect(() => {
+    if (!isMjpegStream) {
+      return
+    }
+
+    let isMounted = true
+    let reconnectCount = 0
+    const maxReconnectAttempts = 5
+
+    const setupMjpegStream = async () => {
+      if (!isMounted || reconnectCount >= maxReconnectAttempts) return
+
+      try {
+        setPlayerState('loading')
+        setMediaError('')
+
+        // For MJPEG streams, create an img element that continuously fetches frames
+        if (imgRef.current) {
+          const testImg = new Image()
+          testImg.crossOrigin = 'anonymous'
+          
+          testImg.onload = () => {
+            if (isMounted) {
+              setPlayerState('playing')
+              reconnectCount = 0
+              if (onVideoEvent) onVideoEvent('stream')
+            }
+          }
+
+          testImg.onerror = () => {
+            if (isMounted) {
+              console.warn('MJPEG stream load failed, attempting reconnect...')
+              reconnectCount++
+              setMediaError(`Connection lost (attempt ${reconnectCount}/${maxReconnectAttempts})`)
+              
+              if (reconnectCount < maxReconnectAttempts) {
+                reconnectTimeoutRef.current = setTimeout(() => {
+                  if (isMounted) setupMjpegStream()
+                }, 2000)
+              } else {
+                setMediaError('Unable to connect to camera stream after multiple attempts')
+                setPlayerState('error')
+              }
+            }
+          }
+
+          // Add cache busting to force fresh frames
+          testImg.src = `${externalUrl}?t=${Date.now()}&_=${Math.random()}`
+        }
+      } catch (error) {
+        console.error('MJPEG stream error:', error)
+        if (isMounted) {
+          setMediaError('Failed to initialize camera stream')
+          setPlayerState('error')
+        }
+      }
+    }
+
+    setupMjpegStream()
+
+    return () => {
+      isMounted = false
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+      }
+    }
+  }, [isMjpegStream, externalUrl, onVideoEvent])
 
   useEffect(() => {
     if (!useWebcam) {
@@ -60,8 +131,16 @@ export default function CameraPlayer({ initialUrl = LOCAL_VIDEO_PATH, hideContro
       return
     }
 
-    const updatedUrl = `${externalUrl.split('?')[0]}?t=${Date.now()}`
-    setCurrentUrl(updatedUrl)
+    if (isMjpegStream) {
+      // For MJPEG streams, force a refresh
+      if (imgRef.current) {
+        imgRef.current.src = `${externalUrl}?t=${Date.now()}&_=${Math.random()}`
+      }
+    } else {
+      const updatedUrl = `${externalUrl.split('?')[0]}?t=${Date.now()}`
+      setCurrentUrl(updatedUrl)
+    }
+    
     setPlayerState('loading')
     if (onVideoEvent) onVideoEvent('reset')
   }
@@ -118,12 +197,18 @@ export default function CameraPlayer({ initialUrl = LOCAL_VIDEO_PATH, hideContro
         ) : externalUrl.match(/\.(jpg|jpeg|png|gif)$/i) ? (
           <img src={externalUrl} alt="Camera snapshot" style={{ width: '100%', height: 400, objectFit: 'cover' }} />
         ) : isMjpegStream ? (
-          <img
-            key={currentUrl}
-            src={currentUrl}
-            alt="Live camera stream"
-            style={{ width: '100%', height: 400, objectFit: 'cover', background: '#000' }}
-          />
+          <>
+            <img
+              ref={imgRef}
+              alt="Live camera stream"
+              style={{ width: '100%', height: 400, objectFit: 'cover', background: '#000', display: playerState === 'error' ? 'none' : 'block' }}
+            />
+            {mediaError && playerState === 'error' && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', color: '#fff', padding: 16, textAlign: 'center' }}>
+                {mediaError}
+              </div>
+            )}
+          </>
         ) : (
           <iframe
             title="ExternalCamera"

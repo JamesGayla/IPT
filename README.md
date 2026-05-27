@@ -138,17 +138,108 @@ npm run dev
 npm run dev:mobile
 ```
 
-**Backend API only**:
+**Backend API only** (Node.js/Express - from root directory):
 ```bash
-npm run server
+cd server
+npm start
 ```
 
-**Backend API (production)**:
+**Backend API with Python/FastAPI** (from root directory):
 ```bash
-npm run server:start
+cd server
+pip install -r requirements.txt
+python main.py
 ```
 
-## 🔐 Authentication
+## � Camera Integration & Live Streaming
+
+The parking lot manager includes real-time MJPEG camera streaming integrated directly into the admin dashboard's monitoring page. The system detects vehicle occupancy and displays the camera feed with parking spot overlays.
+
+### Quick Start - Camera Streaming
+
+#### 1. Install Python Dependencies (first time only)
+```bash
+cd server
+pip install -r requirements.txt
+```
+
+#### 2. Start Both Servers (Windows)
+```bash
+cd server
+run_server.bat
+```
+
+This opens two windows automatically:
+- **API Server** on http://localhost:3001
+- **Vehicle Detector with Camera Streaming** on http://127.0.0.1:4747/video
+
+#### 3. Start the Frontend (in a new terminal)
+```bash
+npm run dev
+```
+
+#### 4. View the Camera Feed
+- Open http://localhost:5173 (or shown Vite URL)
+- Go to **Admin Dashboard → Monitoring**
+- Camera feed displays with parking spot detection overlays
+
+---
+
+### Manual Startup (alternative method)
+
+**Terminal 1 - Start API:**
+```bash
+cd server
+python main.py
+```
+
+**Terminal 2 - Start Vehicle Detector with Streaming:**
+```bash
+cd server
+python vehicle_detector.py --source 0
+```
+
+**Terminal 3 - Start Frontend:**
+```bash
+npm run dev
+```
+
+---
+
+### Camera Source Options
+
+Replace `--source 0` with one of:
+
+**Local Webcam (default):**
+```bash
+python vehicle_detector.py --source 0
+```
+
+**Video File:**
+```bash
+python vehicle_detector.py --source path/to/video.mp4 --video-file
+```
+
+**IP Camera / RTSP Stream:**
+```bash
+python vehicle_detector.py --source http://192.168.1.100:8080/video
+```
+
+---
+
+### Performance Features
+
+- **Resolution**: Optimized at 800×600 for smooth performance
+- **Frame Rate**: 15 FPS for efficient bandwidth usage
+- **Latency**: ~500-1000ms typical streaming latency
+- **Compression**: JPEG quality 80% for faster delivery
+- **Detection**: Server-side vehicle detection with visual overlays
+
+See [CAMERA_INTEGRATION_GUIDE.md](CAMERA_INTEGRATION_GUIDE.md) for detailed setup, configuration, and troubleshooting.
+
+---
+
+## �🔐 Authentication
 
 Default test users:
 - **Admin**: user: `admin` / password: `admin123`
