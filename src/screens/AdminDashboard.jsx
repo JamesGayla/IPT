@@ -2,8 +2,8 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import CameraPlayer from '../components/CameraPlayer'
 import './AdminDashboard.css'
 
-const API_BASE_URL = 'http://localhost:3001'
-const LIVE_CAMERA_URL = 'http://127.0.0.1:4747/video'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+const LIVE_CAMERA_URL = import.meta.env.VITE_CAMERA_URL || 'http://127.0.0.1:4747/video'
 const DEFAULT_ALERT_TIMESTAMP = new Date(Date.now() - 60000)
 const INITIAL_OCCUPANCY_MAP = {
   1: [0, 2, 4, 7]

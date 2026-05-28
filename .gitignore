@@ -28,3 +28,4 @@ dist-ssr
 
 mobile/.expo
 mobile/install-log.txt
+.vercel

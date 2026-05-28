@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import CameraPlayer from '../../components/CameraPlayer'
 import '../AdminDashboard.css'
 
-const API_BASE_URL = 'http://localhost:3001'
-const LIVE_CAMERA_URL = 'http://127.0.0.1:4747/video' // OpenCV stream source for floor 1 detection
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+const LIVE_CAMERA_URL = import.meta.env.VITE_CAMERA_URL || 'http://127.0.0.1:4747/video' // OpenCV stream source for floor 1 detection
 
 export default function AdminMonitoring() {
   const [cctvCameras, setCctvCameras] = useState([])
@@ -48,8 +48,8 @@ export default function AdminMonitoring() {
 
   useEffect(() => {
     fetchStatus()
-    // Sync every 1 second for real-time updates as requested
-    const interval = setInterval(fetchStatus, 1000)
+    // Sync every 3 seconds synchronized with camera refresh
+    const interval = setInterval(fetchStatus, 3000)
     return () => clearInterval(interval)
   }, [fetchStatus])
 

@@ -21,74 +21,34 @@ export default function CameraPlayer({ initialUrl = LOCAL_VIDEO_PATH, hideContro
     }
   }, [externalUrl, useWebcam, isMjpegStream])
 
-  // Handle MJPEG stream with proper continuous refresh
+  // Handle MJPEG stream
   useEffect(() => {
     if (!isMjpegStream) {
       return
     }
 
     let isMounted = true
-    let reconnectCount = 0
-    const maxReconnectAttempts = 5
 
-    const setupMjpegStream = async () => {
-      if (!isMounted || reconnectCount >= maxReconnectAttempts) return
-
-      try {
-        setPlayerState('loading')
-        setMediaError('')
-
-        // For MJPEG streams, create an img element that continuously fetches frames
-        if (imgRef.current) {
-          const testImg = new Image()
-          testImg.crossOrigin = 'anonymous'
-          
-          testImg.onload = () => {
-            if (isMounted) {
-              setPlayerState('playing')
-              reconnectCount = 0
-              if (onVideoEvent) onVideoEvent('stream')
-            }
-          }
-
-          testImg.onerror = () => {
-            if (isMounted) {
-              console.warn('MJPEG stream load failed, attempting reconnect...')
-              reconnectCount++
-              setMediaError(`Connection lost (attempt ${reconnectCount}/${maxReconnectAttempts})`)
-              
-              if (reconnectCount < maxReconnectAttempts) {
-                reconnectTimeoutRef.current = setTimeout(() => {
-                  if (isMounted) setupMjpegStream()
-                }, 2000)
-              } else {
-                setMediaError('Unable to connect to camera stream after multiple attempts')
-                setPlayerState('error')
-              }
-            }
-          }
-
-          // Add cache busting to force fresh frames
-          testImg.src = `${externalUrl}?t=${Date.now()}&_=${Math.random()}`
-        }
-      } catch (error) {
-        console.error('MJPEG stream error:', error)
+    if (isMounted && imgRef.current) {
+      setPlayerState('loading')
+      setMediaError('')
+      
+      // For MJPEG streams, set the src directly
+      // The browser natively supports MJPEG in img tags
+      imgRef.current.src = externalUrl
+      
+      // Mark as playing once we have an img element
+      setTimeout(() => {
         if (isMounted) {
-          setMediaError('Failed to initialize camera stream')
-          setPlayerState('error')
+          setPlayerState('playing')
         }
-      }
+      }, 500)
     }
-
-    setupMjpegStream()
 
     return () => {
       isMounted = false
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-      }
     }
-  }, [isMjpegStream, externalUrl, onVideoEvent])
+  }, [isMjpegStream, externalUrl])
 
   useEffect(() => {
     if (!useWebcam) {

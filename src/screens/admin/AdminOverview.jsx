@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import '../AdminDashboard.css'
 
-const API_BASE_URL = 'http://localhost:3001'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
 
 export default function AdminOverview() {
   const [stats, setStats] = useState({
@@ -17,9 +17,9 @@ export default function AdminOverview() {
     const loadStats = async () => {
       try {
         const [lotRes, cctvRes, alertsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/parking-lot`),
-          fetch(`${API_BASE_URL}/api/cctv`),
-          fetch(`${API_BASE_URL}/api/alerts`)
+          fetch(`${API_BASE_URL}/api/parking-lot?t=${Date.now()}`),
+          fetch(`${API_BASE_URL}/api/cctv?t=${Date.now()}`),
+          fetch(`${API_BASE_URL}/api/alerts?t=${Date.now()}`)
         ])
 
         if (!lotRes.ok || !cctvRes.ok || !alertsRes.ok) {
@@ -44,6 +44,9 @@ export default function AdminOverview() {
     }
 
     loadStats()
+    // Auto-refresh every 3 seconds synchronized with camera
+    const interval = setInterval(loadStats, 3000)
+    return () => clearInterval(interval)
   }, [])
 
   return (
