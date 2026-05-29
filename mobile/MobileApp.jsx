@@ -2,11 +2,16 @@
 import React, { useState } from 'react'
 import { SafeAreaView, StatusBar, View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import Login from './screens/Login'
+import Dashboard from './screens/Dashboard'
+import Analytics from './screens/Analytics'
 import CameraScreen from './screens/Camera'
+import Profile from './screens/Profile'
+import Alerts from './screens/Alerts'
+import ActivityHistory from './screens/ActivityHistory'
 
 const MobileApp = () => {
   const [user, setUser] = useState(null)
-  const [activeTab, setActiveTab] = useState('camera')
+  const [activeTab, setActiveTab] = useState('dashboard')
 
   if (!user) {
     return (
@@ -17,28 +22,52 @@ const MobileApp = () => {
     )
   }
 
+  const renderScreen = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard />
+      case 'analytics':
+        return <Analytics />
+      case 'camera':
+        return <CameraScreen />
+      case 'alerts':
+        return <Alerts />
+      case 'history':
+        return <ActivityHistory />
+      case 'profile':
+        return <Profile user={user} onLogout={() => setUser(null)} />
+      default:
+        return <Dashboard />
+    }
+  }
+
+  const tabs = ['dashboard', 'analytics', 'camera', 'alerts', 'history', 'profile']
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.header}>
-        <Text style={styles.title}>Parking Lot Mobile</Text>
+        <Text style={styles.title}>ParkFlow</Text>
         <TouchableOpacity style={styles.logoutBtn} onPress={() => setUser(null)}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.tabBar}>
-        <TouchableOpacity style={activeTab === 'camera' ? styles.tabActive : styles.tab} onPress={() => setActiveTab('camera')}>
-          <Text style={styles.tabText}>Camera</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={activeTab === 'profile' ? styles.tabActive : styles.tab} onPress={() => setActiveTab('profile')}>
-          <Text style={styles.tabText}>Profile</Text>
-        </TouchableOpacity>
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            style={activeTab === tab ? styles.tabActive : styles.tab}
+            onPress={() => setActiveTab(tab)}
+          >
+            <Text style={styles.tabText}>{tab.charAt(0).toUpperCase() + tab.slice(1)}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <View style={styles.content}>
-        {activeTab === 'camera' ? <CameraScreen /> : <Text style={styles.secondaryText}>Profile screen placeholder</Text>}
+        {renderScreen()}
       </View>
     </SafeAreaView>
   )
@@ -53,9 +82,8 @@ const styles = StyleSheet.create({
   tabBar: { flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderColor: '#e5e7eb' },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center' },
   tabActive: { flex: 1, paddingVertical: 10, alignItems: 'center', borderBottomWidth: 2, borderColor: '#2563eb', backgroundColor: '#e0f2fe' },
-  tabText: { fontWeight: '600' },
-  content: { flex: 1 },
-  secondaryText: { margin: 20, color: '#4b5563' }
+  tabText: { fontWeight: '600', fontSize: 12 },
+  content: { flex: 1 }
 })
 
 export default MobileApp;

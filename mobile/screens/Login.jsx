@@ -1,106 +1,227 @@
 import React, { useState } from 'react';
-import '../styles/Login.css';  // This is working now!
-console.log('CSS imported:', document.styleSheets.length);
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
+import apiService from '../services/api';
 
 const Login = ({ onLogin }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('admin123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async () => {
+    if (!username || !password) {
+      setError('Please enter username and password');
+      return;
+    }
+
     setLoading(true);
     setError('');
     
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-      
+      const data = await apiService.login(username, password);
       if (onLogin) {
         onLogin(data);
       }
-      
     } catch (err) {
-      setError(err.message || 'Failed to connect to server');
+      setError(err.message || 'Failed to connect. Check your IP address and server.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="mobile-login-container">
-      <div className="mobile-login-card">
-        <h1>ParkFlow</h1>
-        <h2>Welcome Back</h2>
-        <p className="subtitle">Sign in to access your parking dashboard</p>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.title}>ParkFlow</Text>
+          <Text style={styles.subtitle}>Welcome Back</Text>
+          <Text style={styles.description}>Sign in to access your parking dashboard</Text>
+        </View>
         
-        {error && <div className="error-message">{error}</div>}
+        {error && <View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text></View>}
         
-        <form onSubmit={handleLogin}>
-          <div className="input-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+        <View style={styles.form}>
+          <Text style={styles.formTitle}>Sign In to Your Account</Text>
           
-          <div className="input-group">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Username</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="admin or user1"
+              placeholderTextColor="#bcc"
+              value={username}
+              onChangeText={setUsername}
+              editable={!loading}
+              autoCapitalize="none"
+            />
+            <Text style={styles.helperText}>Use: admin or user1</Text>
+          </View>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="••••••••"
+              placeholderTextColor="#bcc"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              onChangeText={setPassword}
+              secureTextEntry={true}
+              editable={!loading}
             />
-          </div>
+            <Text style={styles.helperText}>admin123 or user123</Text>
+          </View>
           
-          <button 
-            type="submit" 
+          <TouchableOpacity 
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
             disabled={loading}
-            className="login-button"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Sign In</Text>
+            )}
+          </TouchableOpacity>
+        </View>
         
-        <p className="signup-link">
-          Don't have an account? <a href="#">Sign Up</a>
-        </p>
-      </div>
-      
-      <div className="features">
-        <div className="feature-item">
-          <h3>Smart Parking</h3>
-          <p>Real-time parking spot monitoring</p>
-        </div>
-        
-        <div className="feature-item">
-          <h3>Analytics</h3>
-          <p>Detailed insights and reports</p>
-        </div>
-        
-        <div className="feature-item">
-          <h3>Secure</h3>
-          <p>Safe and secure parking management</p>
-        </div>
-      </div>
-    </div>
+        <View style={styles.features}>
+          <View style={styles.featureItem}>
+            <Text style={styles.featureTitle}>📍 Smart Parking</Text>
+            <Text style={styles.featureDesc}>Real-time parking spot monitoring</Text>
+          </View>
+          
+          <View style={styles.featureItem}>
+            <Text style={styles.featureTitle}>📊 Analytics</Text>
+            <Text style={styles.featureDesc}>Detailed insights and reports</Text>
+          </View>
+          
+          <View style={styles.featureItem}>
+            <Text style={styles.featureTitle}>🔒 Secure</Text>
+            <Text style={styles.featureDesc}>Safe and secure parking management</Text>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 24,
+  },
+  header: {
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#2563eb',
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  description: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  errorBox: {
+    backgroundColor: '#fee',
+    borderColor: '#f55',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#d32f2f',
+    fontSize: 14,
+  },
+  form: {
+    marginBottom: 32,
+  },
+  inputGroup: {
+    marginBottom: 20,
+    backgroundColor: '#f8fafc',
+    padding: 12,
+    borderRadius: 8,
+  },
+  label: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#000',
+    marginBottom: 12,
+    letterSpacing: 1,
+  },
+  input: {
+    backgroundColor: '#ffffff',
+    borderColor: '#d1d5db',
+    borderWidth: 2,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#1f2937',
+  },
+  button: {
+    backgroundColor: '#2563eb',
+    borderRadius: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  formTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000000',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginTop: 4,
+  },
+  features: {
+    marginTop: 16,
+  },
+  featureItem: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+    borderColor: '#e5e7eb',
+    borderWidth: 1,
+  },
+  featureTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  featureDesc: {
+    fontSize: 13,
+    color: '#6b7280',
+  },
+});
 
 export default Login;

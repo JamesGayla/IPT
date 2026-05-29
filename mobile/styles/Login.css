@@ -36,15 +36,20 @@
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 14px;
+  margin-bottom: 12px;
+  font-weight: 800;
+  color: #000000;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .form-group input {

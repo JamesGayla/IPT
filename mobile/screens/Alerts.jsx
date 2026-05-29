@@ -1,81 +1,164 @@
 import { useState, useEffect, useCallback } from 'react'
-import '../styles/Alerts.css'
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native'
+import apiService from '../services/api'
 
 function Alerts() {
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   const fetchAlerts = useCallback(async () => {
+    setLoading(true)
     try {
-      const response = await fetch('http://localhost:3001/api/alerts')
-      const data = await response.json()
+      const data = await apiService.getAlerts()
       setAlerts(data)
-      setLoading(false)
     } catch (error) {
       console.error('Failed to fetch alerts:', error)
+    } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }, [])
 
   useEffect(() => {
-    let isMounted = true
-
-    const load = async () => {
-      if (!isMounted) return
-      await fetchAlerts()
-    }
-
-    load()
-
-    return () => {
-      isMounted = false
-    }
+    fetchAlerts()
+    // Poll every 3 seconds like the web app
+    const interval = setInterval(fetchAlerts, 3000)
+    return () => clearInterval(interval)
   }, [fetchAlerts])
 
   const dismissAlert = useCallback(async (alertId) => {
     try {
-      await fetch(`http://localhost:3001/api/alerts/${alertId}`, {
-        method: 'DELETE'
-      })
+      await apiService.dismissAlert(alertId)
       setAlerts(alerts.filter(a => a.id !== alertId))
     } catch (error) {
       console.error('Failed to dismiss alert:', error)
     }
   }, [alerts])
 
-  if (loading) {
-    return <div className="alerts-container"><p>Loading alerts...</p></div>
+  const onRefresh = useCallback(() => {
+    setRefreshing(true)
+    fetchAlerts()
+  }, [fetchAlerts])
+
+  if (loading && alerts.length === 0) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    )
   }
 
   return (
-    <div className="alerts-container">
-      <h2>Notifications</h2>
+    <View style={styles.container}>
+      <Text style={styles.title}>Notifications</Text>
       
-      {alerts.length === 0 ? (
-        <p className="no-alerts">No alerts at the moment</p>
+      {alerts.length === 0 && !loading ? (
+        <Text style={styles.emptyText}>No alerts at the moment</Text>
       ) : (
-        <div className="alerts-list">
-          {alerts.map(alert => (
-            <div key={alert.id} className={`alert-item alert-${alert.severity}`}>
-              <div className="alert-content">
-                <h3>{alert.type.replace(/_/g, ' ')}</h3>
-                <p>{alert.message}</p>
-                <small>{new Date(alert.timestamp).toLocaleString()}</small>
-              </div>
-              <button 
-                onClick={() => dismissAlert(alert.id)}
-                className="dismiss-btn"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
+        <FlatList
+          data={alerts}
+          keyExtractor={(item) => item.id?.toString()}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          renderItem={({ item }) => (
+            <View style={[styles.alertItem, styles[`alert${item.severity?.charAt(0).toUpperCase() + item.severity?.slice(1)}`]]}>
+              <View style={styles.alertContent}>
+                <Text style={styles.alertType}>{item.type?.replace(/_/g, ' ')}</Text>
+                <Text style={styles.alertMessage}>{item.message}</Text>
+                <Text style={styles.alertTime}>{new Date(item.timestamp).toLocaleString()}</Text>
+              </View>
+              <TouchableOpacity style={styles.dismissBtn} onPress={() => dismissAlert(item.id)}>
+                <Text style={styles.dismissText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          scrollEnabled={true}
+        />
       )}
 
-      <button onClick={fetchAlerts} className="refresh-btn">🔄 Refresh</button>
-    </div>
+      {!loading && <TouchableOpacity style={styles.refreshBtn} onPress={onRefresh}>
+        <Text style={styles.refreshText}>🔄 Refresh</Text>
+      </TouchableOpacity>}
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#f8fafc',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 16,
+    color: '#1f2937',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginVertical: 20,
+  },
+  alertItem: {
+    flexDirection: 'row',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+  },
+  alertCritical: {
+    backgroundColor: '#fee2e2',
+    borderLeftColor: '#dc2626',
+  },
+  alertWarning: {
+    backgroundColor: '#fef3c7',
+    borderLeftColor: '#f59e0b',
+  },
+  alertInfo: {
+    backgroundColor: '#dbeafe',
+    borderLeftColor: '#3b82f6',
+  },
+  alertContent: {
+    flex: 1,
+  },
+  alertType: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  alertMessage: {
+    fontSize: 13,
+    color: '#4b5563',
+    marginBottom: 4,
+  },
+  alertTime: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  dismissBtn: {
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+  },
+  dismissText: {
+    fontSize: 18,
+    color: '#6b7280',
+  },
+  refreshBtn: {
+    backgroundColor: '#2563eb',
+    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  refreshText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+})
 
 export default Alerts
