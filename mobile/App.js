@@ -22,11 +22,8 @@ const STORAGE_KEYS = {
 const TABS = [
   { id: 'status', label: 'Parking' },
   { id: 'analytics', label: 'Analytics' },
-  { id: 'admin', label: 'Admin' },
   { id: 'profile', label: 'Profile' },
 ]
-const ADMIN_USERNAME = 'admin'
-const ADMIN_PASSWORD = 'admin123'
 
 const FALLBACK_API_BASE =
   Platform.OS === 'android' ? 'http://10.0.2.2:3001' : 'http://localhost:3001'
@@ -429,193 +426,7 @@ function AnalyticsScreen() {
   )
 }
 
-function AdminScreen() {
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState('overview')
-  const [selectedFloor, setSelectedFloor] = useState(1)
 
-  const stats = useMemo(
-    () => ({
-      totalSpots: 8,
-      occupiedSpots: 6,
-      availableSpots: 2,
-      occupancyPercentage: 75,
-      totalAlerts: 2,
-      cameraCount: 8,
-    }),
-    [],
-  )
-
-  const alerts = useMemo(
-    () => [
-      {
-        id: 1,
-        type: 'HIGH_OCCUPANCY',
-        message: 'Parking lot at 50% capacity',
-        severity: 'warning',
-        timestamp: new Date().toISOString(),
-      },
-      {
-        id: 2,
-        type: 'SPACE_AVAILABLE',
-        message: 'New parking spaces now available on Floor 2',
-        severity: 'info',
-        timestamp: STATIC_ALERT_TIMESTAMP,
-      },
-    ],
-    [],
-  )
-
-  const occupancyMap = useMemo(
-    () => ({
-      1: [0, 2, 4, 7, 9],
-      2: [1, 3, 5, 8, 10],
-      3: [0, 3, 6, 9, 11],
-      4: [1, 4, 7],
-    }),
-    [],
-  )
-
-  const loginAdmin = useCallback(() => {
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      setIsAdmin(true)
-      setError('')
-      setUsername('')
-      setPassword('')
-      return
-    }
-    setError('Invalid admin credentials.')
-  }, [password, username])
-
-  if (!isAdmin) {
-    return (
-      <View style={styles.tabContent}>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Admin Login</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-          {!!error && <Text style={styles.errorText}>{error}</Text>}
-          <Pressable onPress={loginAdmin} style={styles.primaryBtn}>
-            <Text style={styles.primaryBtnText}>Sign In</Text>
-          </Pressable>
-        </View>
-      </View>
-    )
-  }
-
-  return (
-    <ScrollView style={styles.tabContent} contentContainerStyle={styles.sectionGap}>
-      <Text style={styles.dashboardTitle}>Admin Controls</Text>
-      <View style={styles.statsRow}>
-        <View style={[styles.statCard, styles.statCardPrimary]}>
-          <Text style={styles.statLabel}>Total Spots</Text>
-          <Text style={styles.statValue}>{stats.totalSpots}</Text>
-        </View>
-        <View style={[styles.statCard, styles.statCardDanger]}>
-          <Text style={styles.statLabel}>Occupied</Text>
-          <Text style={styles.statValue}>{stats.occupiedSpots}</Text>
-        </View>
-        <View style={[styles.statCard, styles.statCardSuccess]}>
-          <Text style={styles.statLabel}>Available</Text>
-          <Text style={styles.statValue}>{stats.availableSpots}</Text>
-        </View>
-      </View>
-
-      <View style={styles.segment}>
-        {['overview', 'monitoring', 'alerts'].map((item) => (
-          <Pressable
-            key={item}
-            onPress={() => setActiveTab(item)}
-            style={[styles.segmentBtn, activeTab === item && styles.segmentBtnActive]}
-          >
-            <Text style={[styles.segmentText, activeTab === item && styles.segmentTextActive]}>
-              {toTitle(item)}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {activeTab === 'overview' && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Admin Overview</Text>
-          <Text style={styles.rowText}>Total Spots: {stats.totalSpots}</Text>
-          <Text style={styles.rowText}>Occupied: {stats.occupiedSpots}</Text>
-          <Text style={styles.rowText}>Available: {stats.availableSpots}</Text>
-          <Text style={styles.rowText}>Occupancy: {stats.occupancyPercentage}%</Text>
-          <Text style={styles.rowText}>Alerts: {stats.totalAlerts}</Text>
-          <Text style={styles.rowText}>CCTV Cameras: {stats.cameraCount}</Text>
-        </View>
-      )}
-
-      {activeTab === 'monitoring' && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Floor Monitoring</Text>
-          <View style={styles.segment}>
-            {[1, 2, 3, 4].map((floor) => (
-              <Pressable
-                key={floor}
-                onPress={() => setSelectedFloor(floor)}
-                style={[styles.segmentBtn, selectedFloor === floor && styles.segmentBtnActive]}
-              >
-                <Text
-                  style={[styles.segmentText, selectedFloor === floor && styles.segmentTextActive]}
-                >
-                  Floor {floor}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          <CameraViewer floor={selectedFloor} />
-          <View style={styles.grid}>
-            {Array.from({ length: 8 }, (_, i) => {
-              const occupied = occupancyMap[selectedFloor]?.includes(i)
-              return (
-                <View
-                  key={i}
-                  style={[styles.spotBtn, occupied ? styles.spotOccupied : styles.spotAvailable]}
-                >
-                  <Text style={styles.spotText}>S{i + 1}</Text>
-                </View>
-              )
-            })}
-          </View>
-        </View>
-      )}
-
-      {activeTab === 'alerts' && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>System Alerts</Text>
-          {alerts.map((item) => (
-            <View key={item.id} style={styles.alertRow}>
-              <Text style={styles.rowText}>{toTitle(item.type)}</Text>
-              <Text style={styles.smallMuted}>{item.message}</Text>
-              <Text style={styles.smallMuted}>{new Date(item.timestamp).toLocaleString()}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <Pressable onPress={() => setIsAdmin(false)} style={styles.secondaryBtn}>
-        <Text style={styles.secondaryBtnText}>Logout Admin</Text>
-      </Pressable>
-    </ScrollView>
-  )
-}
 
 function ProfileScreen({ user, onUserUpdate, onLogout }) {
   const [name, setName] = useState('')
@@ -736,8 +547,6 @@ export default function App() {
       <StatusScreen />
     ) : activeTab === 'analytics' ? (
       <AnalyticsScreen />
-    ) : activeTab === 'admin' ? (
-      <AdminScreen />
     ) : activeTab === 'profile' ? (
       <ProfileScreen user={user} onUserUpdate={setUser} onLogout={handleLogout} />
     ) : null
